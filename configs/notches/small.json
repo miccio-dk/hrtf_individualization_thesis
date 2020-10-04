@@ -1,0 +1,26 @@
+{
+    "spectral_features": [
+        "notch",
+        "notch",
+        "notch"
+    ],
+    "frontend": {
+        "sizes": [
+            64
+        ],
+        "activation_type": "relu",
+        "dropout_rate": 0.3
+    },
+    "features_block": {
+        "sizes": [
+            16
+        ],
+        "activation_type": "relu",
+        "dropout_rate": 0.3
+    },
+    "parameters_block": {
+        "sizes": [],
+        "activation_type": "none",
+        "dropout_rate": 0.3
+    }
+}
