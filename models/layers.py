@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.fft import rfft
 from scipy.interpolate import approximate_taylor_polynomial
 
 # calculate polynomial
@@ -75,15 +76,16 @@ class IIRFilterResponse(torch.nn.Module):
         self.eps = torch.finfo(torch.float32).eps
 
     def forward(self, b, a):
-        N = a.shape[0]
-        b_padded = torch.cat([b, torch.zeros(N, self.nfft - 3)], -1)
-        a_padded = torch.cat([a, torch.zeros(N, self.nfft - 3)], -1)
-        b_fft = torch.view_as_complex(torch.rfft(b_padded, 1))
-        a_fft = torch.view_as_complex(torch.rfft(a_padded, 1))
-        y = b_fft / (a_fft + self.eps)
-        y = torch.view_as_real(y)
+        b_fft = rfft(b, n=self.nfft, dim=1)
+        a_fft = rfft(a, n=self.nfft, dim=1)
+        # exclude first (DC) and last (Nyquist) bins
+        y = b_fft[:, 1:-1] / a_fft[:, 1:-1]
+        assert torch.all(torch.isfinite(y))
         # calculate absolute value of complex tuple
-        yabs = torch.norm(y, dim=-1)
+        yabs = torch.abs(y)
+        # reintroduce first (DC) and last (Nyquist) bins
+        ones = torch.ones(a.shape[0], 1)
+        yabs = torch.cat([ones, yabs, ones], dim=-1)
         return yabs
 
 
