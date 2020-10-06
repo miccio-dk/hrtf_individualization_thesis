@@ -78,14 +78,15 @@ class IIRFilterResponse(torch.nn.Module):
     def forward(self, b, a):
         b_fft = rfft(b, n=self.nfft, dim=1)
         a_fft = rfft(a, n=self.nfft, dim=1)
+        yabs = (torch.abs(b_fft) + self.eps) / (torch.abs(a_fft) + self.eps)
         # exclude first (DC) and last (Nyquist) bins
-        y = b_fft[:, 1:-1] / a_fft[:, 1:-1]
-        assert torch.all(torch.isfinite(y))
+        #y = b_fft[:, 1:-1] / a_fft[:, 1:-1]
+        assert torch.all(torch.isfinite(yabs))
         # calculate absolute value of complex tuple
-        yabs = torch.abs(y)
+        #yabs = torch.abs(y)
         # reintroduce first (DC) and last (Nyquist) bins
-        ones = torch.ones(a.shape[0], 1)
-        yabs = torch.cat([ones, yabs, ones], dim=-1)
+        #ones = torch.ones(a.shape[0], 1)
+        #yabs = torch.cat([ones, yabs, ones], dim=-1)
         return yabs
 
 
