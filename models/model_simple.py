@@ -11,7 +11,6 @@ class AutoEncoderSimple(pl.LightningModule):
     def __init__(self, nfft):
         super().__init__()
         self.save_hyperparameters()
-        # TODO programmatic model creation
         self.enc = Encoder1N(nfft)
         self.dec = Decoder1N(nfft)
         self.loss_fn = torch.nn.MSELoss()

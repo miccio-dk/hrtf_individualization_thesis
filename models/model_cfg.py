@@ -30,17 +30,16 @@ class AutoEncoderCfg(pl.LightningModule):
 
     def forward(self, resp_true):
         z = self.enc(resp_true)
-        with torch.not_grad():
-            for spec_feat in z:
-                for spec_param in spec_feat:
-                    if torch.any(~torch.isfinite(spec_param)):
-                        print(torch.nonzero(~torch.isfinite(spec_param)))
         resp_pred = self.dec(*z)
         return *z, resp_pred
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
-        return optimizer
+        lr_scheduler = {
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.317),
+            'monitor': 'val_early_stop_on'
+        }
+        return [optimizer], [lr_scheduler]
 
     def training_step(self, batch, batch_idx):
         loss = self._shared_eval(batch, batch_idx)

@@ -8,10 +8,17 @@ from torch.utils.data import Dataset
 
 # generic sofa dataset
 class SofaDataset(Dataset):
-    def __init__(self, data_path, transform=None):
+    def __init__(self, data_path, transform=None,
+                 keep_subjects=None, skip_subjects=None,
+                 az_range=None, el_range=None, ears=['L', 'R']):
         self.data_path = data_path
         self.transform = transform
-        self.hrirs = None
+        self.keep_subjects = keep_subjects
+        self.skip_subjects = skip_subjects
+        self.az_range = az_range
+        self.el_range = el_range
+        self.ears = ears
+        self.hrirs = []
         self.labels = []
         self.load_data()
 
@@ -36,7 +43,7 @@ class SofaDataset(Dataset):
     def get_label(subj, orient):
         return {
             'subj': subj,
-            'ear': int(orient[2]),
+            'ear': ['L', 'R'][int(orient[2])],
             'az': orient[0],
             'el': orient[1],
         }
@@ -61,17 +68,48 @@ class SofaDataset(Dataset):
         # generate labels
         labels = [SofaDataset.get_label(subj, orient) for orient in orients]
         sofa_file.close()
-        return labels, hrirs
+        return hrirs, labels
+
+    def lbl_in_range(self, val, range_):
+        if range_ is None:
+            return True
+        if isinstance(range_, tuple) and len(range_) == 2:
+            return val >= range_[0] and val <= range_[1]
+        if isinstance(range_, list):
+            return val in range_
+        raise Exception(f'range {range_} is not a valid range')
+
+    def filter_data(self, hrirs, labels):
+        new_hrirs = []
+        new_labels = []
+        for hrir, lbl in zip(hrirs, labels):
+            if not self.lbl_in_range(lbl['az'], self.az_range):
+                continue
+            if not self.lbl_in_range(lbl['el'], self.el_range):
+                continue
+            if lbl['ear'] not in self.ears:
+                continue
+            new_hrirs.append(hrir)
+            new_labels.append(lbl)
+        new_hrirs = np.stack(new_hrirs)
+        return new_hrirs, new_labels
 
     def load_data(self):
         subjects_paths = glob(osp.join(self.data_path, '*.sofa'))
         for i, path in enumerate(subjects_paths):
-            curr_labels, curr_hrirs = SofaDataset.load_sofa_subj(path)
-            # if first iteration, "discover" number of hrirs and create data structures
-            if i == 0:
-                self.hrirs = np.zeros((curr_hrirs.shape[0] * len(subjects_paths), curr_hrirs.shape[1]))
-            # store data
-            sl = slice(i * curr_hrirs.shape[0], (i + 1) * curr_hrirs.shape[0])
-            self.hrirs[sl] = curr_hrirs
+            # filter subject
+            subj = SofaDataset.path_to_subj(path)
+            if (self.keep_subjects is not None) and (subj not in self.keep_subjects):
+                continue
+            if (self.skip_subjects is not None) and (subj in self.skip_subjects):
+                continue
+            # load subject
+            curr_hrirs, curr_labels = SofaDataset.load_sofa_subj(path)
+            # filter data
+            curr_hrirs, curr_labels = self.filter_data(curr_hrirs, curr_labels)
+            # append data
+            self.hrirs.append(curr_hrirs)
             self.labels.extend(curr_labels)
+        # turn hrirs into matrix
+        self.hrirs = np.concatenate(self.hrirs)
         #print(len(self.labels), self.hrirs.shape)

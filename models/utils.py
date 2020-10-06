@@ -35,10 +35,11 @@ def get_freqresp_figure(model, resps_true, resps_labels, shape=(4, 4)):
     return fig
 
 # generate and format a single plot
-def get_freqresp_plot(resp_true, resp_pred, labels, ax, params, show_db=True):
+def get_freqresp_plot(resp_true, resp_pred, lbl, ax, params, show_db=True):
     # detach tensors from computational graph
     x_true = resp_true.detach().numpy() if resp_true.requires_grad else resp_true.numpy()
     x_pred = resp_pred.detach().numpy() if resp_pred.requires_grad else resp_pred.numpy()
+    title = '{subj}-{ear} ({az}, {el})'.format(**lbl)
     if show_db:
         ax.plot(lr.amplitude_to_db(x_true))
         ax.plot(lr.amplitude_to_db(x_pred))
@@ -47,19 +48,10 @@ def get_freqresp_plot(resp_true, resp_pred, labels, ax, params, show_db=True):
     else:
         ax.plot(x_true)
         ax.plot(x_pred)
-        ax.set_ylim([0.9, 4])
+        ax.set_ylim([0.5, 3.5])
         text_y = 1
     ax.set_xlim([0, len(x_true)])
-    ax.set_title(format_title(labels))
-
+    ax.set_title(title)
+    # show spectral params z
     label_str = '\n'.join([f'{n}: {p:.3f}' for n, p in params])
     ax.text(0, text_y, label_str)
-    # TODO do not use item()
-    #ax.set_title(f'w0={w0.item():.2f} ; bw={bw.item():.2f}')
-
-def format_title(lbl):
-    subj = lbl['subj']
-    ear = 'L' if lbl['ear'] else 'R'
-    az = lbl['az']
-    el = lbl['el']
-    return f'{subj}-{ear} ({az}, {el})'

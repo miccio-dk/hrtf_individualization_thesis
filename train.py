@@ -3,6 +3,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import LearningRateLogger
 from models.model_cfg import AutoEncoderCfg
 from datasets.data_module import HrtfDataModule
 
@@ -10,10 +11,8 @@ def cli_main():
     # args
     parser = ArgumentParser()
     # trainer args
-    # TODO assign default root path
     parser.add_argument('--dataset', default='viking', type=str)
     parser.add_argument('--feature', default=None, type=str)
-    #parser.add_argument('--root_path', default='.', type=str)
     parser.add_argument('--max_epochs', default=10, type=int)
     parser.add_argument('--resume_path', default=None, type=str)
     parser.add_argument('--dev', action='store_true')
@@ -34,9 +33,12 @@ def cli_main():
         nfft=args.nfft,
         feature=args.feature,
         num_workers=args.num_workers,
-        batch_size=args.batch_size)
+        batch_size=args.batch_size,
+        test_subjects=['kemarLast', 'A', 'B'],
+        az_range=[0],
+        el_range=(-45, 45))
     dm.prepare_data()
-    dm.setup('fit')
+    dm.setup(stage=None)
 
     # load model configs
     with open(args.model_cfg_path, 'r') as fp:
@@ -48,7 +50,7 @@ def cli_main():
         cfg=cfg,
         log_on_batch=args.log_on_batch)
     # pass first batch of validation data for plotting
-    val_batch, val_labels = next(iter(dm.val_dataloader()))
+    val_batch, val_labels = next(iter(dm.test_dataloader()))
     model.example_input_array = val_batch
     model.example_input_labels = pd.DataFrame(val_labels)
 
@@ -62,10 +64,11 @@ def cli_main():
         limit_train_batches=0.1 if args.dev else 1.0,
         limit_val_batches=0.1 if args.dev else 1.0,
         profiler=args.dev,
+        callbacks=[LearningRateLogger(logging_interval='epoch')],
         #default_root_dir=args.root_path,
         resume_from_checkpoint=args.resume_path,
-        early_stop_callback=True,
-        terminate_on_nan=True,
+        early_stop_callback=False and True,
+        terminate_on_nan=False,
         gradient_clip_val=0.5,
         logger=logger,
         deterministic=args.dev)
