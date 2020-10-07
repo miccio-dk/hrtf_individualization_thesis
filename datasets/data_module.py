@@ -1,4 +1,7 @@
+import os
+import requests
 import pytorch_lightning as pl
+from glob import glob
 from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose
 from .sofa_dataset import SofaDataset
@@ -17,6 +20,7 @@ class HrtfDataModule(pl.LightningDataModule):
         self.ds_args = kwargs
         # select dataset to load
         self.dataset = None
+        self.dataset_type = dataset_type
         self.dataset_path = {
             'viking': '/Users/miccio/OneDrive - Aalborg Universitet/viking_measurements/viking2/4_sofa',
             'hutubs': '/Users/miccio/work/aau/hutubs',
@@ -28,8 +32,27 @@ class HrtfDataModule(pl.LightningDataModule):
             self.transforms.insert(1, SpecEnv(self.nfft, self.feature, cutoff=0.8))
 
     def prepare_data(self):
-        # TODO download cipic?
-        pass
+        # download cipic?
+        if self.dataset_type == 'cipic':
+            file_list = glob(os.path.join(self.dataset_path, '*.sofa'))
+            if len(file_list) == 45:
+                return
+            ds_url = 'http://sofacoustics.org/data/database/cipic'
+            os.makedirs(self.dataset_path, exist_ok=True)
+            file_count = 0
+            for i in range(166):
+                file_url = f'{ds_url}/subject_{i:03}.sofa'
+                file_path = f'{self.dataset_path}/subj_{i:03}.sofa'
+                # check if already exists
+                if os.path.exists(file_path):
+                    pass
+                # download file
+                r = requests.get(file_url)
+                # if download is successful, store
+                if r.status_code == 200:
+                    with open(file_path, 'wb') as fp:
+                        fp.write(r.content)
+                    file_count += 1
 
     def setup(self, stage=None):
         # assign train/val split(s)
@@ -43,7 +66,8 @@ class HrtfDataModule(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.data_test = SofaDataset(self.dataset_path, transform=Compose(self.transforms),
                                          keep_subjects=self.test_subjects, **self.ds_args)
-            self.dims = getattr(self, 'dims', self.data_test[0][0].shape)
+            if len(self.data_test) > 0:
+                self.dims = getattr(self, 'dims', self.data_test[0][0].shape)
 
     def train_dataloader(self):
         return DataLoader(self.data_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers)

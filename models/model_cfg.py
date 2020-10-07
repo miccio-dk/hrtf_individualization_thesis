@@ -24,7 +24,7 @@ class AutoEncoderCfg(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--nfft', type=int, default=256)
-        parser.add_argument('--model_cfg_path', default='./configs/default.json', type=str)
+        parser.add_argument('--model_cfg_path', default='./configs/models/default.json', type=str)
         parser.add_argument('--log_on_batch', action='store_true')
         return parser
 

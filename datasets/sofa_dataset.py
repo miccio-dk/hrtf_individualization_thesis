@@ -35,6 +35,7 @@ class SofaDataset(Dataset):
             sample = self.transform(sample)
         return sample
 
+    # works for filepath in the form '/path/to/file/subj_XXX.sofa'
     @staticmethod
     def path_to_subj(path):
         return osp.splitext(osp.basename(path))[0][5:]
@@ -73,11 +74,11 @@ class SofaDataset(Dataset):
     def lbl_in_range(self, val, range_):
         if range_ is None:
             return True
-        if isinstance(range_, tuple) and len(range_) == 2:
+        if len(range_) == 2:
             return val >= range_[0] and val <= range_[1]
-        if isinstance(range_, list):
+        else:
             return val in range_
-        raise Exception(f'range {range_} is not a valid range')
+        #raise Exception(f'range {range_} is not a valid range')
 
     def filter_data(self, hrirs, labels):
         new_hrirs = []
@@ -111,5 +112,8 @@ class SofaDataset(Dataset):
             self.hrirs.append(curr_hrirs)
             self.labels.extend(curr_labels)
         # turn hrirs into matrix
-        self.hrirs = np.concatenate(self.hrirs)
+        if self.hrirs:
+            self.hrirs = np.concatenate(self.hrirs)
+        else:
+            self.hrirs = np.zeros((0, 0))
         #print(len(self.labels), self.hrirs.shape)

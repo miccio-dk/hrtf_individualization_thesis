@@ -11,13 +11,12 @@ def cli_main():
     # args
     parser = ArgumentParser()
     # trainer args
-    parser.add_argument('--dataset', default='viking', type=str)
-    parser.add_argument('--feature', default=None, type=str)
-    parser.add_argument('--max_epochs', default=10, type=int)
+    parser.add_argument('--data_cfg_path', default='./configs/data/default.json', type=str)
     parser.add_argument('--resume_path', default=None, type=str)
-    parser.add_argument('--dev', action='store_true')
-    parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--max_epochs', default=10, type=int)
+    parser.add_argument('--num_workers', default=0, type=int)
+    parser.add_argument('--dev', action='store_true')
     # model args
     parser = AutoEncoderCfg.add_model_specific_args(parser)
     # parse
@@ -27,30 +26,33 @@ def cli_main():
     if args.dev:
         pl.seed_everything(1337)
 
+    # load configs
+    with open(args.model_cfg_path, 'r') as fp:
+        model_cfg = json.load(fp)
+    with open(args.data_cfg_path, 'r') as fp:
+        data_cfg = json.load(fp)
+
     # data loaders
     dm = HrtfDataModule(
-        dataset_type=args.dataset,
+        dataset_type=data_cfg['dataset'],
         nfft=args.nfft,
-        feature=args.feature,
+        feature=data_cfg['feature'],
         num_workers=args.num_workers,
         batch_size=args.batch_size,
-        test_subjects=['kemarLast', 'A', 'B'],
-        az_range=[0],
-        el_range=(-45, 45))
+        test_subjects=data_cfg['test_subjects'],
+        az_range=data_cfg['az_range'],
+        el_range=data_cfg['el_range'])
     dm.prepare_data()
     dm.setup(stage=None)
-
-    # load model configs
-    with open(args.model_cfg_path, 'r') as fp:
-        cfg = json.load(fp)
 
     # model
     model = AutoEncoderCfg(
         nfft=args.nfft,
-        cfg=cfg,
+        cfg=model_cfg,
         log_on_batch=args.log_on_batch)
+
     # pass first batch of validation data for plotting
-    val_batch, val_labels = next(iter(dm.test_dataloader()))
+    val_batch, val_labels = next(iter(dm.val_dataloader()))
     model.example_input_array = val_batch
     model.example_input_labels = pd.DataFrame(val_labels)
 
