@@ -1,5 +1,4 @@
 import io
-import numpy as np
 import librosa as lr
 import torch
 import matplotlib.pyplot as plt

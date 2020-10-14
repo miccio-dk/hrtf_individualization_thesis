@@ -57,7 +57,8 @@ def cli_main():
     model.example_input_labels = pd.DataFrame(val_labels)
 
     # logger
-    logger = TensorBoardLogger('logs', name=model.__class__.__name__)
+    log_name = '{}_{}_{}'.format(model.model_name, data_cfg['dataset'], data_cfg['feature'])
+    logger = TensorBoardLogger('logs', name=log_name)
 
     # training
     trainer = pl.Trainer(

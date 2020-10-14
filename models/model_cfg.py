@@ -8,6 +8,8 @@ from .utils import get_freqresp_figure, figure_to_tensor
 
 # dense model accounting for an arbitrary number of spectral features
 class AutoEncoderCfg(pl.LightningModule):
+    model_name = 'AEcfg'
+
     def __init__(self, nfft, cfg, log_on_batch=False):
         super().__init__()
         self.save_hyperparameters()
@@ -16,8 +18,8 @@ class AutoEncoderCfg(pl.LightningModule):
         self.loss_fn = torch.nn.MSELoss()
         self.example_input_array = torch.zeros(1, nfft // 2 + 1)
         self.example_input_labels = None
-        self.grad_freq = 5
-        self.fig_freq = 1
+        self.grad_freq = 100
+        self.fig_freq = 50
         self.log_on_batch = log_on_batch
 
     @staticmethod
@@ -36,7 +38,7 @@ class AutoEncoderCfg(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         lr_scheduler = {
-            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.317),
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5624, patience=20, cooldown=25),
             'monitor': 'val_early_stop_on'
         }
         return [optimizer], [lr_scheduler]

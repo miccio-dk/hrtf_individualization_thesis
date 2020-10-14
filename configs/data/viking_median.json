@@ -1,0 +1,7 @@
+{
+    "dataset": "viking",
+    "feature": "notches",
+    "test_subjects": ["kemarLast", "noPinnae2"],
+    "az_range": [0],
+    "el_range": [-45, 80]
+}
