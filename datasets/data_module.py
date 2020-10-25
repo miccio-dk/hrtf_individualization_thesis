@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose
-from .sofa_dataset import SofaDataset
+from .anthro_sofa_dataset import AnthroSofaDataset
 from .data_transforms import ToHrtf, SpecEnv, ToTensor
 from .utils import download_sofa
 
@@ -51,15 +51,17 @@ class HrtfDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # assign train/val split(s)
         if stage == 'fit' or stage is None:
-            self.dataset = SofaDataset(self.dataset_path, transform=Compose(self.transforms),
-                                       skip_subjects=self.test_subjects, **self.ds_args)
+            self.dataset = AnthroSofaDataset(
+                data_path=self.dataset_path, dataset_type=self.dataset_type,
+                transform=Compose(self.transforms), skip_subjects=self.test_subjects, **self.ds_args)
             lengths = self._calc_splits(self.dataset, self.split)
             self.data_train, self.data_val = random_split(self.dataset, lengths)
             self.dims = self.data_train[0][0].shape
         # assign test split(s)
         if stage == 'test' or stage is None:
-            self.data_test = SofaDataset(self.dataset_path, transform=Compose(self.transforms),
-                                         keep_subjects=self.test_subjects, **self.ds_args)
+            self.data_test = AnthroSofaDataset(
+                data_path=self.dataset_path, dataset_type=self.dataset_type,
+                transform=Compose(self.transforms), keep_subjects=self.test_subjects, **self.ds_args)
             if len(self.data_test) > 0:
                 self.dims = getattr(self, 'dims', self.data_test[0][0].shape)
 
