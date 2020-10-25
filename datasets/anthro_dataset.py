@@ -39,7 +39,7 @@ class AnthropometricsDataset(Dataset):
     def __init__(self, data_path, dataset_type):
         self.data_path = data_path
         self.dataset_type = dataset_type
-        self.df = []
+        self.df = None
         load_data = {
             'viking': None,
             'hutubs': self.load_data_hutubs,
@@ -53,6 +53,8 @@ class AnthropometricsDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
+        if self.df is None:
+            return {}
         if isinstance(idx, int):
             return self.df.iloc[idx].to_dict()
         if isinstance(idx, tuple):
