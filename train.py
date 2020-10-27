@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from argparse import ArgumentParser
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import LearningRateLogger
-from models.model_cfg import AutoEncoderCfg
+from models.model_cfg import EndToEndCfg
 from datasets.data_module import HrtfDataModule
 
 def cli_main():
@@ -18,7 +18,7 @@ def cli_main():
     parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--dev', action='store_true')
     # model args
-    parser = AutoEncoderCfg.add_model_specific_args(parser)
+    parser = EndToEndCfg.add_model_specific_args(parser)
     # parse
     args = parser.parse_args()
 
@@ -46,7 +46,7 @@ def cli_main():
     dm.setup(stage=None)
 
     # model
-    model = AutoEncoderCfg(
+    model = EndToEndCfg(
         nfft=args.nfft,
         cfg=model_cfg,
         log_on_batch=args.log_on_batch)

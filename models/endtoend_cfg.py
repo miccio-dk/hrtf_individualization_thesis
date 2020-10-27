@@ -7,8 +7,8 @@ from .utils import get_freqresp_figure, figure_to_tensor
 
 
 # dense model accounting for an arbitrary number of spectral features
-class AutoEncoderCfg(pl.LightningModule):
-    model_name = 'AEcfg'
+class EndToEndCfg(pl.LightningModule):
+    model_name = 'EtE_cfg'
 
     def __init__(self, nfft, cfg, log_on_batch=False):
         super().__init__()
@@ -26,7 +26,7 @@ class AutoEncoderCfg(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--nfft', type=int, default=256)
-        parser.add_argument('--model_cfg_path', default='./configs/models/default.json', type=str)
+        parser.add_argument('--model_cfg_path', default='./configs/models/ae_filters/default.json', type=str)
         parser.add_argument('--log_on_batch', action='store_true')
         return parser
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
             'dropout_rate': 0.4,
         },
     }
-    ae = AutoEncoderCfg(nfft, cfg)
+    ae = EndToEndCfg(nfft, cfg)
 
     print(ae.enc)
     print()

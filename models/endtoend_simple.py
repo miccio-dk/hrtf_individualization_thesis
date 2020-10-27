@@ -7,8 +7,8 @@ from .utils import get_freqresp_figure, figure_to_tensor
 
 
 # simple model accounting for a single spectral feature
-class AutoEncoderSimple(pl.LightningModule):
-    model_name = 'AEsimple'
+class EndToEndSimple(pl.LightningModule):
+    model_name = 'EtE_simple'
 
     def __init__(self, nfft):
         super().__init__()
