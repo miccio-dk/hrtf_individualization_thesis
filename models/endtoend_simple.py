@@ -36,19 +36,19 @@ class EndToEndSimple(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        loss = self._shared_eval(batch)
         result = pl.TrainResult(minimize=loss)
         #result.log('loss', loss)
         return result
 
     def validation_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        loss = self._shared_eval(batch)
         result = pl.EvalResult(checkpoint_on=loss, early_stop_on=loss)
         #result.log('val_loss', loss)
         return result
 
     def test_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        loss = self._shared_eval(batch)
         result = pl.EvalResult()
         result.log('test_loss', loss)
         return result
@@ -56,7 +56,7 @@ class EndToEndSimple(pl.LightningModule):
     def training_epoch_end(self, outputs):
         # log scalars
         avg_loss = outputs['minimize'].mean()
-        self.logger.experiment.add_scalar("Train/loss", avg_loss, self.current_epoch)
+        self.logger.experiment.add_scalar('Train/loss', avg_loss, self.current_epoch)
         # log gradients
         if self.current_epoch % self.grad_freq == 0:
             for name, params in self.named_parameters():
@@ -66,7 +66,7 @@ class EndToEndSimple(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         # log scalars
         avg_loss = outputs['early_stop_on'].mean()
-        self.logger.experiment.add_scalar("Valid/loss", avg_loss, self.current_epoch)
+        self.logger.experiment.add_scalar('Valid/loss', avg_loss, self.current_epoch)
         # log figures
         if self.current_epoch % self.fig_freq == 0:
             fig = get_freqresp_figure(self, self.example_input_array)
@@ -74,7 +74,7 @@ class EndToEndSimple(pl.LightningModule):
             self.logger.experiment.add_image('Valid/freq_resp', img, self.current_epoch)
         return outputs
 
-    def _shared_eval(self, batch, batch_idx):
+    def _shared_eval(self, batch):
         resp_true, _ = batch
         w0, bw = self.enc(resp_true)
         resp_pred = self.dec(w0, bw)

@@ -1,7 +1,8 @@
 {
     "dataset": "ari_inear",
-    "feature": "notches",
-    "test_subjects": null,
+    "feature": null,
+    "test_subjects": ["029", "056", "093", "135", "002"],
     "az_range": [0],
-    "el_range": [-45, 80]
+    "el_range": [-45, 80],
+    "use_db": true
 }

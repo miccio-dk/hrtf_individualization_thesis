@@ -26,7 +26,7 @@ class EndToEndCfg(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--nfft', type=int, default=256)
-        parser.add_argument('--model_cfg_path', default='./configs/models/ae_filters/default.json', type=str)
+        parser.add_argument('--model_cfg_path', type=str, default='./configs/models/ete_dense/default.json')
         parser.add_argument('--log_on_batch', action='store_true')
         return parser
 

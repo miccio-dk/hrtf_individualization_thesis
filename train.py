@@ -4,14 +4,16 @@ import pytorch_lightning as pl
 from argparse import ArgumentParser
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import LearningRateLogger
-from models.model_cfg import EndToEndCfg
+from models.endtoend_cfg import EndToEndCfg
+from models.cvae_dense_cfg import CVAECfg
 from datasets.data_module import HrtfDataModule
 
 def cli_main():
     # args
     parser = ArgumentParser()
     # trainer args
-    parser.add_argument('--data_cfg_path', default='./configs/data/default.json', type=str)
+    parser.add_argument('model_type', type=str)
+    parser.add_argument('data_cfg_path', type=str)
     parser.add_argument('--resume_path', default=None, type=str)
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--max_epochs', default=10, type=int)
@@ -47,14 +49,16 @@ def cli_main():
     dm.setup(stage=None)
 
     # model
-    model = EndToEndCfg(
-        nfft=args.nfft,
-        cfg=model_cfg,
-        log_on_batch=args.log_on_batch)
+    model_class = {
+        'ete': EndToEndCfg,
+        'cvae_dense': CVAECfg
+    }.get(args.model_type)
+    model = model_class(nfft=args.nfft, cfg=model_cfg)
 
     # pass first batch of validation data for plotting
-    val_batch, val_labels = next(iter(dm.val_dataloader()))
-    model.example_input_array = val_batch
+    val_resp, val_labels = next(iter(dm.val_dataloader()))
+    val_c = val_labels['el'].unsqueeze(-1).float()
+    model.example_input_array = (val_resp, val_c)
     model.example_input_labels = pd.DataFrame(val_labels)
 
     # logger

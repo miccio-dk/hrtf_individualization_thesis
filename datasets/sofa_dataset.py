@@ -56,8 +56,8 @@ class SofaDataset(Dataset):
         sofa_file = sofa.Database.open(path)
         # extract orientations and hrirs
         orients = sofa_file.Source.Position.get_values(
-            system="spherical",
-            angle_unit="degree")
+            system='spherical',
+            angle_unit='degree')
         hrirs = sofa_file.Data.IR.get_values()
         n_orients = orients.shape[0]
         # "explode" along n_receiver

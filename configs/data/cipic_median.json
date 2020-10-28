@@ -1,7 +1,8 @@
 {
     "dataset": "cipic",
-    "feature": "notches",
+    "feature": null,
     "test_subjects": ["003", "008", "009"],
     "az_range": [0],
-    "el_range": [-45, 45]
+    "el_range": [-45, 45],
+    "use_db": true
 }

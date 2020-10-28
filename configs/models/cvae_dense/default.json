@@ -1,0 +1,6 @@
+{
+    "encoder_layer_sizes": [64, 32],
+    "decoder_layer_sizes": [32, 64],
+    "latent_size": 16,
+    "labels": ["el"]
+}
