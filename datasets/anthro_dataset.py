@@ -58,7 +58,10 @@ class AnthropometricsDataset(Dataset):
         if isinstance(idx, int):
             return self.df.iloc[idx].to_dict()
         if isinstance(idx, tuple):
-            return self.df.loc[idx].to_dict()
+            try:
+                return self.df.loc[idx].to_dict()
+            except KeyError:
+                return {lbl: 0. for lbl in self.df.columns}
 
     @property
     def features(self):
