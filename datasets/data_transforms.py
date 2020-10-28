@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import scipy.fft as fft
 import scipy.signal as sig
+import librosa as lr
 from scipy.interpolate import interp1d
 
 
@@ -16,11 +17,21 @@ class ToHrtf(object):
         hrtf_abs = np.abs(hrtf)
         return (hrtf_abs, labels)
 
+class ToDB(object):
+    def __init__(self, ref=1., amin=1e-6, top_db=120):
+        self.ref = ref
+        self.amin = amin
+        self.top_db = top_db
+
+    def __call__(self, sample):
+        hrtf, labels = sample
+        hrtf_db = lr.amplitude_to_db(hrtf, ref=self.ref, amin=self.amin, top_db=self.top_db)
+        return (hrtf_db, labels)
 
 # extract spectral envelope from hrtfs
 class SpecEnv(object):
     def __init__(self, nfft, feature='specenv', cutoff=None):
-        self.f = fft.rfftfreq(nfft, 1. / 2)
+        self.f = fft.rfftfreq(nfft, 0.5)
         self.cutoff = cutoff
         self.feature_fnc = {
             'specenv': self.specenv,

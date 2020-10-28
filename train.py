@@ -37,6 +37,7 @@ def cli_main():
         dataset_type=data_cfg['dataset'],
         nfft=args.nfft,
         feature=data_cfg['feature'],
+        use_db=data_cfg['use_db'],
         num_workers=args.num_workers,
         batch_size=args.batch_size,
         test_subjects=data_cfg['test_subjects'],

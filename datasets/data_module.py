@@ -2,15 +2,16 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose
 from .anthro_sofa_dataset import AnthroSofaDataset
-from .data_transforms import ToHrtf, SpecEnv, ToTensor
+from .data_transforms import ToHrtf, ToDB, SpecEnv, ToTensor
 from .utils import download_sofa
 
 class HrtfDataModule(pl.LightningDataModule):
-    def __init__(self, dataset_type, nfft, feature=None, num_workers=4, batch_size=32, split=0.2, test_subjects=None, **kwargs):
+    def __init__(self, dataset_type, nfft, feature=None, use_db=False, num_workers=4, batch_size=32, split=0.2, test_subjects=None, **kwargs):
         super().__init__()
         # store params
         self.nfft = nfft
         self.feature = feature
+        self.use_db = use_db
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.split = split
@@ -26,9 +27,12 @@ class HrtfDataModule(pl.LightningDataModule):
             'ari_inear': '/Users/miccio/work/aau/ari_inear'
         }.get(dataset_type)
         # setup transforms
-        self.transforms = [ToHrtf(self.nfft), ToTensor()]
+        self.transforms = [ToHrtf(self.nfft)]
         if self.feature is not None:
-            self.transforms.insert(1, SpecEnv(self.nfft, self.feature, cutoff=0.8))
+            self.transforms.append(SpecEnv(self.nfft, self.feature, cutoff=0.8))
+        if self.use_db:
+            self.transforms.append(ToDB())
+        self.transforms.append(ToTensor())
 
     def prepare_data(self):
         # download cipic
