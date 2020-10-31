@@ -139,4 +139,5 @@ cython_debug/
 
 ## USER-DEFINED
 logs/
+logs_old/
 .vscode/

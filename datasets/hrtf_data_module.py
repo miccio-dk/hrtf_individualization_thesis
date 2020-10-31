@@ -57,7 +57,7 @@ class HrtfDataModule(pl.LightningDataModule):
         if stage == 'fit' or stage is None:
             self.dataset = AnthroSofaDataset(
                 data_path=self.dataset_path, dataset_type=self.dataset_type,
-                transform=Compose(self.transforms), skip_subjects=self.test_subjects, **self.ds_args)
+                transforms=Compose(self.transforms), skip_subjects=self.test_subjects, **self.ds_args)
             lengths = self._calc_splits(self.dataset, self.split)
             self.data_train, self.data_val = random_split(self.dataset, lengths)
             self.dims = self.data_train[0][0].shape
@@ -65,7 +65,7 @@ class HrtfDataModule(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.data_test = AnthroSofaDataset(
                 data_path=self.dataset_path, dataset_type=self.dataset_type,
-                transform=Compose(self.transforms), keep_subjects=self.test_subjects, **self.ds_args)
+                transforms=Compose(self.transforms), keep_subjects=self.test_subjects, **self.ds_args)
             if len(self.data_test) > 0:
                 self.dims = getattr(self, 'dims', self.data_test[0][0].shape)
 

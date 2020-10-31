@@ -76,7 +76,7 @@ class Decoder(nn.Module):
 
 # dense conditional variational autoencoder
 class CVAECfg(pl.LightningModule):
-    model_name = 'CVAE_cfg'
+    model_name = 'CVAE_dense'
 
     def __init__(self, nfft, cfg):
         super().__init__()
@@ -101,7 +101,6 @@ class CVAECfg(pl.LightningModule):
         return parser
 
     def loss_function(self, resp_true, resp_pred, means, log_var, z):
-        # TODO replace binary cross entropy
         mse = torch.nn.functional.mse_loss(resp_pred, resp_true, reduction='sum')
         kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp())
         return (mse + kld) / resp_true.size(0)
@@ -113,30 +112,24 @@ class CVAECfg(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         lr_scheduler = {
             'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5624, patience=20, cooldown=25),
-            'monitor': 'val_early_stop_on'
+            'monitor': 'val_loss'
         }
         return [optimizer], [lr_scheduler]
 
     def training_step(self, batch, batch_idx):
         loss = self._shared_eval(batch, batch_idx)
-        result = pl.TrainResult(minimize=loss)
-        return result
+        self.log('train_loss', loss)
+        return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self._shared_eval(batch, batch_idx)
-        result = pl.EvalResult(checkpoint_on=loss, early_stop_on=loss)
-        return result
+        self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
         loss = self._shared_eval(batch, batch_idx)
-        result = pl.EvalResult()
-        result.log('test_loss', loss)
-        return result
+        self.log('test_loss', loss)
 
     def training_epoch_end(self, outputs):
-        # log scalars
-        avg_loss = outputs['minimize'].mean()
-        self.logger.experiment.add_scalar('Train/loss', avg_loss, self.current_epoch)
         # log gradients
         if self.current_epoch % self.grad_freq == 0:
             for name, params in self.named_parameters():
@@ -146,13 +139,6 @@ class CVAECfg(pl.LightningModule):
             fig = self.get_freqresp_figure(self.example_input_array, self.example_input_labels)
             img = figure_to_tensor(fig)
             self.logger.experiment.add_image('Valid/resp_freq', img, self.current_epoch)
-        return outputs
-
-    def validation_epoch_end(self, outputs):
-        # log scalars
-        avg_loss = outputs['early_stop_on'].mean()
-        self.logger.experiment.add_scalar('Valid/loss', avg_loss, self.current_epoch)
-        return outputs
 
     def _shared_eval(self, batch, batch_idx):
         resp_true, labels = batch

@@ -8,7 +8,7 @@ from .utils import get_freqresp_figure, figure_to_tensor
 
 # dense model accounting for an arbitrary number of spectral features
 class EndToEndCfg(pl.LightningModule):
-    model_name = 'EtE_cfg'
+    model_name = 'EtE_dense'
 
     def __init__(self, nfft, cfg, log_on_batch=False):
         super().__init__()
