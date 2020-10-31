@@ -8,11 +8,11 @@ from torch.utils.data import Dataset
 
 # generic sofa dataset
 class SofaDataset(Dataset):
-    def __init__(self, data_path, transform=None,
+    def __init__(self, data_path, transforms=None,
                  keep_subjects=None, skip_subjects=None,
                  az_range=None, el_range=None, ears=['L', 'R']):
         self.data_path = data_path
-        self.transform = transform
+        self.transforms = transforms
         self.keep_subjects = keep_subjects
         self.skip_subjects = skip_subjects
         self.az_range = az_range
@@ -31,8 +31,8 @@ class SofaDataset(Dataset):
         hrir = self.hrirs[idx]
         labels = self.labels[idx]
         sample = (hrir, labels)
-        if self.transform:
-            sample = self.transform(sample)
+        if self.transforms:
+            sample = self.transforms(sample)
         return sample
 
     # works for filepath in the form '/path/to/file/subj_XXX.sofa'

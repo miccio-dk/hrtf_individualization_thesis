@@ -1,0 +1,7 @@
+{
+    "dataset": "ami_ears",
+    "img_size": [64, 64],
+    "features": ["front", "back"],
+    "mode": "bw3",
+    "test_subjects": ["000", "001", "002", "003", "004"]
+}

@@ -1,0 +1,6 @@
+{
+    "input_channels": 1,
+    "encoder_channels": [32, 64, 64],
+    "decoder_channels": [64, 64, 32],
+    "latent_size": 16
+}
