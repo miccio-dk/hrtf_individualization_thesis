@@ -20,6 +20,14 @@ class ResNetVAECfg(VAE):
         # TODO implement from scratch so it only uses 1 channel
         super().__init__(input_height, latent_dim=latent_dim)
 
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
+        lr_scheduler = {
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5624, patience=30, cooldown=25),
+            'monitor': 'val_loss'
+        }
+        return [optimizer], [lr_scheduler]
+
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
@@ -37,6 +45,7 @@ class ResNetVAECfg(VAE):
             self.logger.experiment.add_image('Valid/ears', img, self.current_epoch)
 
     def get_pred_ear_figure(self, ear_true, labels, n_images=6):
+        ear_true = ear_true.to(self.device)
         # run prediction
         self.eval()
         with torch.no_grad():

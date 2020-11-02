@@ -20,6 +20,7 @@ def cli_main():
     parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--dev', action='store_true')
     parser.add_argument('--test', action='store_false', dest='train')
+    parser.add_argument('--gpus', default=None)
     # model args
     parser = VAECfg.add_model_specific_args(parser)
     # parse
@@ -67,7 +68,7 @@ def cli_main():
     logger = TensorBoardLogger('logs', name=log_name, log_graph=False)
 
     # callbacks
-    early_stop = EarlyStopping(monitor='val_loss', patience=50)
+    early_stop = EarlyStopping(monitor='val_loss', patience=100)
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
     checkpoint = ModelCheckpoint(monitor='val_loss')
 
@@ -78,12 +79,13 @@ def cli_main():
         limit_train_batches=0.1 if args.dev else 1.0,
         limit_val_batches=0.3 if args.dev else 1.0,
         profiler=args.dev,
-        callbacks=[early_stop, lr_monitor, checkpoint],
+        callbacks=[lr_monitor, checkpoint],
         resume_from_checkpoint=args.resume_path,
         terminate_on_nan=False,
         gradient_clip_val=0.5,
         logger=logger,
-        deterministic=args.dev)
+        deterministic=args.dev,
+        gpus=args.gpus)
 
     if args.train:
         trainer.fit(model, dm)

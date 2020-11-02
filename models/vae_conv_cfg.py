@@ -176,6 +176,7 @@ class VAECfg(pl.LightningModule):
     def get_pred_ear_figure(self, ear_true, labels, n_images=6):
         # run prediction
         self.eval()
+        ear_true = ear_true.to(self.device)
         with torch.no_grad():
             ear_pred, means, log_var, z = self.forward(ear_true)
         self.train()

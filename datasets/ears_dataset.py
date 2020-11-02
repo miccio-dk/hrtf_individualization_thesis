@@ -56,7 +56,7 @@ class EarsDataset(Dataset):
                 continue
             if (self.skip_subjects is not None) and (subj in self.skip_subjects):
                 continue
-            if feature not in self.features:
+            if self.features and feature not in self.features:
                 continue
             # load image
             img = Image.open(path, 'r')
