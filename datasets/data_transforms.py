@@ -17,6 +17,7 @@ class ToHrtf(object):
         hrtf_abs = np.abs(hrtf)
         return (hrtf_abs, labels)
 
+# convert from linear scale to decibels/logarithmic scale
 class ToDB(object):
     def __init__(self, ref=1., amin=1e-6, top_db=120):
         self.ref = ref
@@ -28,7 +29,7 @@ class ToDB(object):
         hrtf_db = lr.amplitude_to_db(hrtf, ref=self.ref, amin=self.amin, top_db=self.top_db)
         return (hrtf_db, labels)
 
-# extract spectral envelope from hrtfs
+# extract spectral envelope or notches from hrtfs
 class SpecEnv(object):
     def __init__(self, nfft, feature='specenv', cutoff=None):
         self.f = fft.rfftfreq(nfft, 0.5)
@@ -66,7 +67,6 @@ class SpecEnv(object):
         notches = s - specenv + 1
         return notches
 
-
 # convert numpy array to pytorch tensor
 class ToTensor(object):
     def __init__(self, use_float=True):
@@ -78,3 +78,22 @@ class ToTensor(object):
         if self.use_float:
             x = x.float()
         return (x, labels)
+
+# add gaussian white noise to the input
+class AddGaussianNoise(object):
+    def __init__(self, mean=0., std=1.):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+
+# add salt-and-pepper noise to the input
+class AddSaltPepper(object):
+    def __init__(self, mean=0., std=1.):
+        # TODO implement
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean

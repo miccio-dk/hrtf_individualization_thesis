@@ -47,6 +47,7 @@ def cli_main():
         test_subjects=data_cfg['test_subjects'],
         img_size=data_cfg['img_size'],
         features=data_cfg['features'],
+        augmentations=data_cfg['augmentations'],
         mode=data_cfg['mode'])
 
     if args.train:
