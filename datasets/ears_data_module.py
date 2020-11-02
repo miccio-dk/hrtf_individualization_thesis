@@ -1,7 +1,8 @@
+import os
 import pytorch_lightning as pl
+from dotenv import load_dotenv
 from torch.utils.data import DataLoader, random_split
 from .ears_dataset import EarsDataset
-
 
 class EarsDataModule(pl.LightningDataModule):
     def __init__(self, dataset_type, num_workers=4, batch_size=16, split=0.2, test_subjects=None, **kwargs):
@@ -13,10 +14,12 @@ class EarsDataModule(pl.LightningDataModule):
         self.test_subjects = test_subjects
         self.ds_args = kwargs
         # select dataset to load
+        load_dotenv()
+        path_basedir = os.getenv("HRTFI_DATA_BASEPATH")
         self.dataset = None
         self.dataset_path = {
-            'ami_ears': '/Users/miccio/work/aau/ami_ears',
-            'hutubs_ears': '/Users/miccio/work/aau/hutubs_ears'
+            'ami_ears': os.path.join(path_basedir, 'ami_ears'),
+            'hutubs_ears': os.path.join(path_basedir, 'hutubs_ears')
         }.get(dataset_type)
 
     def setup(self, stage=None):

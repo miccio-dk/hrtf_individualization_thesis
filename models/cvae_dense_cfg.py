@@ -149,9 +149,12 @@ class CVAECfg(pl.LightningModule):
 
     def get_freqresp_figure(self, input_data, labels, shape=(4, 4)):
         resps_true, c = input_data
+        resps_true = resps_true.to(self.device)
         # run prediction
+        self.eval()
         with torch.no_grad():
             resps_pred, means, log_var, z = self.forward(resps_true, c)
+        self.train()
         # setup plot
         fig, axs = plt.subplots(*shape, figsize=(10, 10))
         for i, ax in enumerate(axs.flatten()):

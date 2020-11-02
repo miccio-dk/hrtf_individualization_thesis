@@ -1,4 +1,6 @@
+import os
 import pytorch_lightning as pl
+from dotenv import load_dotenv
 from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose
 from .anthro_sofa_dataset import AnthroSofaDataset
@@ -18,13 +20,15 @@ class HrtfDataModule(pl.LightningDataModule):
         self.test_subjects = test_subjects
         self.ds_args = kwargs
         # select dataset to load
+        load_dotenv()
+        path_basedir = os.getenv("HRTFI_DATA_BASEPATH")
         self.dataset = None
         self.dataset_type = dataset_type
         self.dataset_path = {
-            'viking': '/Users/miccio/OneDrive - Aalborg Universitet/viking_measurements/viking2/4_sofa',
-            'hutubs': '/Users/miccio/work/aau/hutubs',
-            'cipic': '/Users/miccio/work/aau/cipic',
-            'ari_inear': '/Users/miccio/work/aau/ari_inear'
+            'viking': os.path.join(path_basedir, 'viking'),
+            'hutubs': os.path.join(path_basedir, 'hutubs'),
+            'cipic': os.path.join(path_basedir, 'cipic'),
+            'ari_inear': os.path.join(path_basedir, 'ari_inear')
         }.get(dataset_type)
         # setup transforms
         self.transforms = [ToHrtf(self.nfft)]

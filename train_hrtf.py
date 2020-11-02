@@ -20,6 +20,7 @@ def cli_main():
     parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--dev', action='store_true')
     parser.add_argument('--test', action='store_false', dest='train')
+    parser.add_argument('--gpus', default=None)
     # model args
     # TODO use correct class or make 'add_model_specific_args' a method of model parents
     parser = EndToEndCfg.add_model_specific_args(parser)
@@ -89,7 +90,8 @@ def cli_main():
         terminate_on_nan=False,
         gradient_clip_val=0.5,
         logger=logger,
-        deterministic=args.dev)
+        deterministic=args.dev,
+        gpus=args.gpus)
 
     if args.train:
         trainer.fit(model, dm)
