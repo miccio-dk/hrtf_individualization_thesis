@@ -1,9 +1,6 @@
 import torch
 import numpy as np
-import pytorch_lightning as pl
-from collections import OrderedDict
 from argparse import ArgumentParser
-from torch import nn
 from pl_bolts.models.autoencoders import VAE
 
 
@@ -16,9 +13,14 @@ class ResNetVAECfg(VAE):
         self.grad_freq = 50
         self.fig_freq = 10
         input_height = input_size[0]
-        latent_dim = cfg['latent_size']
         # TODO implement from scratch so it only uses 1 channel
-        super().__init__(input_height, latent_dim=latent_dim, kl_coeff=cfg['kl_coeff'], first_conv=cfg['first_conv'])
+        super().__init__(
+            input_height,
+            enc_type=cfg['enc_type'],
+            enc_out_dim=cfg['enc_out_dim'],
+            latent_dim=cfg['latent_size'],
+            kl_coeff=cfg['kl_coeff'],
+            first_conv=cfg['first_conv'])
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)

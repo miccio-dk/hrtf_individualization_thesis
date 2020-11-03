@@ -1,0 +1,7 @@
+{
+    "latent_size": 32,
+    "kl_coeff": 0.001,
+    "first_conv": true,
+    "enc_type": "resnet50",
+    "enc_out_dim": 2048
+}

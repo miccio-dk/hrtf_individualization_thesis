@@ -1,5 +1,0 @@
-{
-    "latent_size": 16,
-    "kl_coeff": 0.001,
-    "first_conv": true
-}

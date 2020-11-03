@@ -1,0 +1,7 @@
+{
+    "latent_size": 16,
+    "kl_coeff": 0.001,
+    "first_conv": false,
+    "enc_type": "resnet18",
+    "enc_out_dim": 512
+}
