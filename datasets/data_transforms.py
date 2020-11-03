@@ -4,7 +4,7 @@ import scipy.fft as fft
 import scipy.signal as sig
 import librosa as lr
 from scipy.interpolate import interp1d
-
+from skimage.util import random_noise
 
 # convert hrir to hrtf
 class ToHrtf(object):
@@ -86,14 +86,15 @@ class AddGaussianNoise(object):
         self.std = std
 
     def __call__(self, tensor):
-        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+        return tensor + torch.randn(tensor.shape) * self.std + self.mean
 
-# add salt-and-pepper noise to the input
-class AddSaltPepper(object):
-    def __init__(self, mean=0., std=1.):
-        # TODO implement
-        self.mean = mean
-        self.std = std
+# wrapper around skimage.utils.random_noise
+class AddRandomNoise(object):
+    def __init__(self, mode='gaussian', **kwargs):
+        self.mode = mode
+        self.kwargs = kwargs
 
     def __call__(self, tensor):
-        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+        img = tensor.numpy()
+        img = random_noise(img, mode=self.mode, clip=True, **self.kwargs)
+        return torch.tensor(img).float()

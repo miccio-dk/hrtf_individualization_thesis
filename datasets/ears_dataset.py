@@ -4,7 +4,7 @@ from glob import glob
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor, Grayscale, Resize, RandomHorizontalFlip
 from torch.utils.data import Dataset
-from .data_transforms import AddGaussianNoise, AddSaltPepper
+from .data_transforms import AddRandomNoise
 
 
 # generic sofa dataset
@@ -24,10 +24,7 @@ class EarsDataset(Dataset):
         # setup optional augmentations
         self.augmentations = []
         if augmentations:
-            if 'gaussian_noise' in augmentations:
-                self.augmentations.append(AddGaussianNoise(mean=0., std=.1))
-            if 'salt_pepper' in augmentations:
-                self.augmentations.append(AddSaltPepper())
+            self.augmentations = [AddRandomNoise(mode=mode) for mode in augmentations]
             # chance for no augmentation
             self.augmentations.append(None)
         # other params
