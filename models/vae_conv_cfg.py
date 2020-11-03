@@ -115,6 +115,7 @@ class VAECfg(pl.LightningModule):
         self.save_hyperparameters()
         self.grad_freq = 50
         self.fig_freq = 10
+        self.kl_coeff = cfg['kl_coeff']
         input_shape = [cfg['input_channels']] + input_size
         encoder_channels = cfg['encoder_channels']
         latent_size = cfg['latent_size']
@@ -130,8 +131,9 @@ class VAECfg(pl.LightningModule):
     def loss_function(self, ear_true, ear_pred, means, log_var, z):
         # TODO replace binary cross entropy
         mse = torch.nn.functional.mse_loss(ear_pred, ear_true, reduction='sum')
-        kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp())
-        return (mse + kld) / ear_true.size(0)
+        kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp()) * self.kl_coeff
+        loss = (mse + kld) / ear_true.size(0)
+        return mse, kld, loss
 
     def forward(self, x):
         return self.vae(x)
@@ -145,16 +147,22 @@ class VAECfg(pl.LightningModule):
         return [optimizer], [lr_scheduler]
 
     def training_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('train_recon_loss', mse)
+        self.log('train_kl', kld)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('val_recon_loss', mse)
+        self.log('val_kl', kld)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('test_recon_loss', mse)
+        self.log('test_kl', kld)
         self.log('test_loss', loss)
 
     def training_epoch_end(self, outputs):
@@ -170,8 +178,8 @@ class VAECfg(pl.LightningModule):
     def _shared_eval(self, batch, batch_idx):
         ear_true, labels = batch
         ear_pred, means, log_var, z = self.forward(ear_true)
-        loss = self.loss_function(ear_true, ear_pred, means, log_var, z)
-        return loss
+        losses = self.loss_function(ear_true, ear_pred, means, log_var, z)
+        return losses
 
     def get_pred_ear_figure(self, ear_true, labels, n_images=6):
         ear_true = ear_true.to(self.device)
