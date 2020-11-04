@@ -2,7 +2,7 @@ import os
 import pytorch_lightning as pl
 from dotenv import load_dotenv
 from torch.utils.data import DataLoader, random_split
-from .ears_dataset import EarsDataset
+from .ears_dataset import AmiDataset, HutubsEarsDataset
 
 class EarsDataModule(pl.LightningDataModule):
     def __init__(self, dataset_type, num_workers=4, batch_size=16, split=0.2, test_subjects=None, **kwargs):
@@ -21,17 +21,22 @@ class EarsDataModule(pl.LightningDataModule):
             'ami_ears': os.path.join(path_basedir, 'ami_ears'),
             'hutubs_ears': os.path.join(path_basedir, 'hutubs_ears')
         }.get(dataset_type)
+        # select dataset class
+        self.DS = {
+            'ami_ears': AmiDataset,
+            'hutubs_ears': HutubsEarsDataset
+        }.get(dataset_type)
 
     def setup(self, stage=None):
         # assign train/val split(s)
         if stage == 'fit' or stage is None:
-            self.dataset = EarsDataset(data_path=self.dataset_path, skip_subjects=self.test_subjects, **self.ds_args)
+            self.dataset = self.DS(data_path=self.dataset_path, skip_subjects=self.test_subjects, **self.ds_args)
             lengths = self._calc_splits(self.dataset, self.split)
             self.data_train, self.data_val = random_split(self.dataset, lengths)
             self.dims = self.data_train[0][0].shape
         # assign test split(s)
         if stage == 'test' or stage is None:
-            self.data_test = EarsDataset(data_path=self.dataset_path, keep_subjects=self.test_subjects, **self.ds_args)
+            self.data_test = self.DS(data_path=self.dataset_path, keep_subjects=self.test_subjects, **self.ds_args)
             if len(self.data_test) > 0:
                 self.dims = getattr(self, 'dims', self.data_test[0][0].shape)
 

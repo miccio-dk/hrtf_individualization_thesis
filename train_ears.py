@@ -41,14 +41,9 @@ def cli_main():
         data_cfg = json.load(fp)
     # init data loader
     dm = EarsDataModule(
-        dataset_type=data_cfg['dataset'],
+        **data_cfg,
         num_workers=args.num_workers,
-        batch_size=args.batch_size,
-        test_subjects=data_cfg['test_subjects'],
-        img_size=data_cfg['img_size'],
-        features=data_cfg['features'],
-        augmentations=data_cfg['augmentations'],
-        mode=data_cfg['mode'])
+        batch_size=args.batch_size)
 
     if args.train:
         # load model configs
@@ -65,7 +60,7 @@ def cli_main():
         model.example_input_labels = pd.DataFrame(val_labels)
 
     # logger
-    log_name = '{}_{}'.format(model.model_name, data_cfg['dataset'])
+    log_name = '{}_{}'.format(model.model_name, data_cfg['dataset_type'])
     logger = TensorBoardLogger('logs', name=log_name, log_graph=False)
 
     # callbacks

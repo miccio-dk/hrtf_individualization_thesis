@@ -1,5 +1,5 @@
 {
-    "dataset": "ami_ears",
+    "dataset_type": "ami_ears",
     "img_size": [96, 96],
     "features": null,
     "mode": "bw",
