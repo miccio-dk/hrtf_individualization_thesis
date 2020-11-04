@@ -50,7 +50,7 @@ class EarsDataset(Dataset):
         # apply transforms
         if self.transforms:
             img = self.transforms(ear)
-        if 'feature' in labels and labels['feature'] == 'back':
+        if 'feature' in labels and labels['feature'] != 'back':
             img = RandomHorizontalFlip(1.)(img)
         # apply augmentations
         if self.augmentations:

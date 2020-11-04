@@ -1,8 +1,8 @@
 {
     "dataset_type": "ami_ears",
     "img_size": [96, 96],
-    "features": null,
     "mode": "bw",
     "augmentations": null,
-    "test_subjects": ["000", "001", "002", "003", "004"]
+    "test_subjects": ["000", "001", "002", "003", "004"],
+    "features": null
 }

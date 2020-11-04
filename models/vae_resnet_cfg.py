@@ -33,7 +33,7 @@ class ResNetVAECfg(VAE):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument('--model_cfg_path', type=str, default='./configs/models/vae_conv/default.json')
+        parser.add_argument('--model_cfg_path', type=str, default='./configs/models/vae_resnet/18.json')
         return parser
 
     def training_epoch_end(self, outputs):

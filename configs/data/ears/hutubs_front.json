@@ -4,6 +4,6 @@
     "mode": "bw",
     "augmentations": ["gaussian", "s&p", "speckle"],
     "test_subjects": ["009", "018", "027", "036", "045"],
-    "az_range": [-20, 20],
-    "el_range": [-20, 20]
+    "az_range": [0],
+    "el_range": [0]
 }

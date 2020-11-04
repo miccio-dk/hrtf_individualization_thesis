@@ -125,7 +125,7 @@ class VAECfg(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument('--model_cfg_path', type=str, default='./configs/models/vae_conv/default.json')
+        parser.add_argument('--model_cfg_path', type=str, default='./configs/models/vae_conv/small.json')
         return parser
 
     def loss_function(self, ear_true, ear_pred, means, log_var, z):
