@@ -1,0 +1,6 @@
+{
+    "latent_size": 64,
+    "kl_coeff": 0.001,
+    "use_inception": true,
+    "repeat_per_block": 1
+}

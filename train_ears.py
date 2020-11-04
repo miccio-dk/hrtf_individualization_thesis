@@ -6,6 +6,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping, ModelCheckpoint
 from models.vae_conv_cfg import VAECfg
 from models.vae_resnet_cfg import ResNetVAECfg
+from models.vae_incept_cfg import InceptionVAECfg
 from datasets.ears_data_module import EarsDataModule
 
 def cli_main():
@@ -33,7 +34,8 @@ def cli_main():
     # pick model
     ModelClass = {
         'vae_conv': VAECfg,
-        'vae_resnet': ResNetVAECfg
+        'vae_resnet': ResNetVAECfg,
+        'vae_incept': InceptionVAECfg
     }.get(args.model_type)
 
     # load data configs

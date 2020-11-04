@@ -106,7 +106,7 @@ class Decoder(nn.Module):
         return x
 
 
-# dense conditional variational autoencoder
+# convolutional variational autoencoder
 class VAECfg(pl.LightningModule):
     model_name = 'VAE_conv'
 
