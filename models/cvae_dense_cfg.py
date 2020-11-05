@@ -103,7 +103,8 @@ class CVAECfg(pl.LightningModule):
     def loss_function(self, resp_true, resp_pred, means, log_var, z):
         mse = torch.nn.functional.mse_loss(resp_pred, resp_true, reduction='sum')
         kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp())
-        return (mse + kld) / resp_true.size(0)
+        loss = (mse + kld) / resp_true.size(0)
+        return mse, kld, loss
 
     def forward(self, resp_true, c):
         return self.cvae(resp_true, c)
@@ -117,16 +118,22 @@ class CVAECfg(pl.LightningModule):
         return [optimizer], [lr_scheduler]
 
     def training_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('train_recon_loss', mse)
+        self.log('train_kl', kld)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('val_recon_loss', mse)
+        self.log('val_kl', kld)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
-        loss = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        self.log('test_recon_loss', mse)
+        self.log('test_kl', kld)
         self.log('test_loss', loss)
 
     def training_epoch_end(self, outputs):
@@ -144,12 +151,12 @@ class CVAECfg(pl.LightningModule):
         resp_true, labels = batch
         c = torch.stack([labels[lbl] for lbl in self.c_labels], dim=-1).float()
         resp_pred, means, log_var, z = self.forward(resp_true, c)
-        loss = self.loss_function(resp_true, resp_pred, means, log_var, z)
-        return loss
+        losses = self.loss_function(resp_true, resp_pred, means, log_var, z)
+        return losses
 
     def get_freqresp_figure(self, input_data, labels, shape=(4, 4)):
         resps_true, c = input_data
-        resps_true = resps_true.to(self.device)
+        resps_true, c = resps_true.to(self.device), c.to(self.device)
         # run prediction
         self.eval()
         with torch.no_grad():

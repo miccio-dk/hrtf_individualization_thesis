@@ -33,7 +33,7 @@ class EndToEndCfg(pl.LightningModule):
     def forward(self, resp_true):
         z = self.enc(resp_true)
         resp_pred = self.dec(*z)
-        return *z, resp_pred
+        return z, resp_pred
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)

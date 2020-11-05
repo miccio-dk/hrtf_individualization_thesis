@@ -192,28 +192,3 @@ class VAECfg(pl.LightningModule):
         img_pred = torch.dstack(ear_pred[:n_images].unbind())
         img = torch.hstack((img_true, img_pred))
         return img
-
-
-# TEST CODE FOR MODEL
-if __name__ == '__main__':
-    img_size = [96, 96]
-    cfg = {
-        'input_channels': 1,
-        'encoder_channels': [32, 16, 8],
-        'decoder_channels': [8, 16, 32],
-        'latent_size': 16
-    }
-    m = VAECfg(img_size, cfg)
-
-    print(m.vae)
-    print()
-    print(m.vae.enc)
-    print()
-    print(m.vae.dec)
-
-    # TODO replace with img?
-    ear_true = torch.Tensor(np.random.randn(8, cfg['input_channels'], *img_size))
-    ear_pred, means, log_var, z = m.forward(ear_true)
-    print(z)
-    print()
-    print(ear_pred.shape)

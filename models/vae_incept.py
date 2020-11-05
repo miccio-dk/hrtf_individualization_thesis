@@ -165,8 +165,8 @@ class VAE(nn.Module):
         self.model_name = f"jaffe_{flag}_inception_rep{repeat_per_block}"
 
     def _reparameterize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        esp = torch.randn(*mu.size())
+        std = torch.exp(0.5 * logvar)
+        esp = torch.randn_like(std)
         z = mu + std * esp
         return z
 

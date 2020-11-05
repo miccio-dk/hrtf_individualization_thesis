@@ -13,7 +13,7 @@ class InceptionVAECfg(pl.LightningModule):
         self.save_hyperparameters()
         self.grad_freq = 50
         self.fig_freq = 10
-        # TODO store and use kl_coeff
+        self.kl_coeff = cfg['kl_coeff']
         # init model
         latent_size = cfg['latent_size']
         use_inception = cfg['use_inception']
@@ -62,7 +62,7 @@ class InceptionVAECfg(pl.LightningModule):
     def loss_function(self, recon_x, x, mu, logvar):
         # https://arxiv.org/abs/1312.6114 (Appendix B)
         BCE = torch.nn.functional.binary_cross_entropy(recon_x, x, size_average=False)
-        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()) * self.kl_coeff
         return BCE, KLD, BCE + KLD
 
     def training_step(self, batch, batch_idx):
