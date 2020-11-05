@@ -1,0 +1,8 @@
+{
+    "dataset": "hutubs",
+    "feature": null,
+    "test_subjects": ["009", "018", "027", "036", "045"],
+    "az_range": null,
+    "el_range": null,
+    "use_db": true
+}

@@ -1,4 +1,5 @@
 import json
+import torch
 import pandas as pd
 import pytorch_lightning as pl
 from argparse import ArgumentParser
@@ -65,7 +66,7 @@ def cli_main():
             dm.prepare_data()
             dm.setup(stage=None)
             val_resp, val_labels = next(iter(dm.val_dataloader()))
-            val_c = val_labels['el'].unsqueeze(-1).float()
+            val_c = torch.stack([val_labels[lbl] for lbl in model_cfg['labels']], dim=-1).float()
             model.example_input_array = (val_resp, val_c)
             model.example_input_labels = pd.DataFrame(val_labels)
 

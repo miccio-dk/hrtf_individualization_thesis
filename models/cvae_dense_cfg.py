@@ -162,6 +162,7 @@ class CVAECfg(pl.LightningModule):
         with torch.no_grad():
             resps_pred, means, log_var, z = self.forward(resps_true, c)
         self.train()
+        resps_pred, resps_true = resps_pred.cpu(), resps_true.cpu()
         # setup plot
         fig, axs = plt.subplots(*shape, figsize=(10, 10))
         for i, ax in enumerate(axs.flatten()):
