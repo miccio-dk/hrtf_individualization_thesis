@@ -1,9 +1,11 @@
 from argparse import ArgumentParser
 import torch
-from torch import nn
+import pandas as pd
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
+from torch import nn
 from .utils import figure_to_tensor, get_freqresp_plot
+from torch.utils.data._utils.collate import default_collate
 
 
 class CVAE(nn.Module):
@@ -118,23 +120,49 @@ class CVAECfg(pl.LightningModule):
         return [optimizer], [lr_scheduler]
 
     def training_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        _, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
         self.log('train_recon_loss', mse)
         self.log('train_kl', kld)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        _, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
         self.log('val_recon_loss', mse)
         self.log('val_kl', kld)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
-        self.log('test_recon_loss', mse)
-        self.log('test_kl', kld)
-        self.log('test_loss', loss)
+        results, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
+        resp_pred, means, log_var, z = results
+        resp_true, labels = batch
+        # generate logs
+        bs = batch[0].shape[0]
+        # TODO add metrics: SD
+        logs = {
+            'test_recon_loss': mse / bs,
+            'test_kl': kld / bs,
+            'test_loss': loss
+        }
+        self.log_dict(logs)
+        # generate reconstruction
+        labels = pd.DataFrame(labels)
+        n_cols = 4
+        shape = (max(bs // n_cols, 1), n_cols)
+        fig = self.get_freqresp_figure(resp_true, resp_pred, labels, shape=shape)
+        img = figure_to_tensor(fig)
+        return logs, img
+
+    def test_epoch_end(self, output_results):
+        metrics, imgs = list(zip(*output_results))
+        collated_results = default_collate(metrics)
+        img = torch.hstack(imgs)
+        avg_results = {k: torch.mean(v) for k, v in collated_results.items()}
+        self.log_dict(avg_results)
+        self.logger.experiment.add_image('Valid/resp_freq', img, self.current_epoch)
 
     def training_epoch_end(self, outputs):
         # log gradients
@@ -143,33 +171,38 @@ class CVAECfg(pl.LightningModule):
                 self.logger.experiment.add_histogram(name, params, self.current_epoch)
         # log figures
         if self.current_epoch % self.fig_freq == 0:
-            fig = self.get_freqresp_figure(self.example_input_array, self.example_input_labels)
+            # run prediction
+            resp_true, c = self.example_input_array
+            resp_true, c = resp_true.to(self.device), c.to(self.device)
+            self.eval()
+            with torch.no_grad():
+                resp_pred, means, log_var, z = self.forward(resp_true, c)
+            self.train()
+            resp_true, resp_pred = resp_true.cpu(), resp_pred.cpu()
+            # generate figure
+            fig = self.get_freqresp_figure(resp_true, resp_pred, self.example_input_labels, title=True)
             img = figure_to_tensor(fig)
             self.logger.experiment.add_image('Valid/resp_freq', img, self.current_epoch)
 
     def _shared_eval(self, batch, batch_idx):
         resp_true, labels = batch
         c = torch.stack([labels[lbl] for lbl in self.c_labels], dim=-1).float()
-        resp_pred, means, log_var, z = self.forward(resp_true, c)
-        losses = self.loss_function(resp_true, resp_pred, means, log_var, z)
-        return losses
+        results = self.forward(resp_true, c)
+        losses = self.loss_function(resp_true, *results)
+        return results, losses
 
-    def get_freqresp_figure(self, input_data, labels, shape=(4, 4)):
-        resps_true, c = input_data
-        resps_true, c = resps_true.to(self.device), c.to(self.device)
-        # run prediction
-        self.eval()
-        with torch.no_grad():
-            resps_pred, means, log_var, z = self.forward(resps_true, c)
-        self.train()
-        resps_pred, resps_true = resps_pred.cpu(), resps_true.cpu()
+    def get_freqresp_figure(self, resp_true, resp_pred, labels, shape=(4, 4), width=12.0, wh_ratio=2.5, title=False):
         # setup plot
-        fig, axs = plt.subplots(*shape, figsize=(10, 10))
+        fig, axs = plt.subplots(*shape, figsize=(width, width * shape[0] / shape[1] / wh_ratio))
         for i, ax in enumerate(axs.flatten()):
-            #values = z[i]
-            get_freqresp_plot(resps_true[i], resps_pred[i], labels.iloc[i], ax, convert_db=False)
-        fig.suptitle('Frequency responses')
-        fig.tight_layout(rect=[0, 0, 1, 0.98])
+            if i >= resp_true.shape[0]:
+                break
+            get_freqresp_plot(resp_true[i], resp_pred[i], labels.iloc[i], ax, convert_db=False)
+        if title:
+            fig.suptitle('Frequency responses')
+            fig.tight_layout(rect=[0, 0, 1, 0.98])
+        else:
+            fig.tight_layout()
         return fig
 
 

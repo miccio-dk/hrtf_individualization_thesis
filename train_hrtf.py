@@ -4,7 +4,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping
 from models.endtoend_cfg import EndToEndCfg
 from models.cvae_dense_cfg import CVAECfg
 from datasets.hrtf_data_module import HrtfDataModule
@@ -20,13 +20,14 @@ def cli_main():
     parser.add_argument('--max_epochs', default=10, type=int)
     parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--dev', action='store_true')
-    parser.add_argument('--test', action='store_false', dest='train')
+    parser.add_argument('--test_ckpt_path', default=None, type=str)
     parser.add_argument('--gpus', default=None)
     # model args
     # TODO use correct class or make 'add_model_specific_args' a method of model parents
     parser = EndToEndCfg.add_model_specific_args(parser)
     # parse
     args = parser.parse_args()
+    is_training = args.test_ckpt_path is None
 
     # ensure reproducibility
     if args.dev:
@@ -53,7 +54,11 @@ def cli_main():
         az_range=data_cfg['az_range'],
         el_range=data_cfg['el_range'])
 
-    if args.train:
+    # logger
+    log_name = '{}_{}_{}'.format(ModelClass.model_name, data_cfg['dataset'], data_cfg['feature'])
+    logger = TensorBoardLogger('logs', name=log_name)
+
+    if is_training:
         # load model configs
         with open(args.model_cfg_path, 'r') as fp:
             model_cfg = json.load(fp)
@@ -61,7 +66,7 @@ def cli_main():
         model = ModelClass(nfft=args.nfft, cfg=model_cfg)
 
         # pass first batch of validation data for plotting
-        # TODO this part changes depending on the model
+        # TODO this part should change depending on the model
         if args.model_type == 'cvae_dense':
             dm.prepare_data()
             dm.setup(stage=None)
@@ -70,35 +75,37 @@ def cli_main():
             model.example_input_array = (val_resp, val_c)
             model.example_input_labels = pd.DataFrame(val_labels)
 
-    # logger
-    log_name = '{}_{}_{}'.format(model.model_name, data_cfg['dataset'], data_cfg['feature'])
-    logger = TensorBoardLogger('logs', name=log_name)
+        # callbacks
+        early_stop = EarlyStopping(monitor='val_loss', patience=50)
+        lr_monitor = LearningRateMonitor(logging_interval='epoch')
+        #checkpoint = ModelCheckpoint(monitor='val_loss')  # there's a built-in checkpoint already monitoring val_loss
 
-    # callbacks
-    early_stop = EarlyStopping(monitor='val_loss', patience=50)
-    lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    checkpoint = ModelCheckpoint(monitor='val_loss')
-
-    # training
-    trainer = pl.Trainer(
-        weights_summary='full',
-        max_epochs=args.max_epochs,
-        limit_train_batches=0.1 if args.dev else 1.0,
-        limit_val_batches=0.3 if args.dev else 1.0,
-        profiler=args.dev,
-        callbacks=[early_stop, lr_monitor, checkpoint],
-        resume_from_checkpoint=args.resume_path,
-        terminate_on_nan=False,
-        gradient_clip_val=0.5,
-        logger=logger,
-        deterministic=args.dev,
-        gpus=args.gpus)
-
-    if args.train:
-        trainer.fit(model, dm)
+        # train!
+        trainer = pl.Trainer(
+            weights_summary='full',
+            max_epochs=args.max_epochs,
+            limit_train_batches=0.1 if args.dev else 1.0,
+            limit_val_batches=0.3 if args.dev else 1.0,
+            profiler=args.dev,
+            callbacks=[early_stop, lr_monitor],
+            resume_from_checkpoint=args.resume_path,
+            terminate_on_nan=False,
+            gradient_clip_val=0.5,
+            logger=logger,
+            deterministic=args.dev,
+            gpus=args.gpus)
+        trainer.fit(model=model, datamodule=dm)
     else:
-        # TODO implement
-        trainer.test()
+        trainer = pl.Trainer(
+            logger=logger,
+            weights_summary='full',
+            profiler=args.dev,
+            deterministic=args.dev,
+            gpus=args.gpus)
+        model = ModelClass.load_from_checkpoint(
+            checkpoint_path=args.test_ckpt_path,
+            map_location=None)
+        trainer.test(model=model, datamodule=dm)
 
 
 if __name__ == '__main__':

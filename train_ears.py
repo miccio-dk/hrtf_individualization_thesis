@@ -3,7 +3,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping
 from models.vae_conv_cfg import VAECfg
 from models.vae_resnet_cfg import ResNetVAECfg
 from models.vae_incept_cfg import InceptionVAECfg
@@ -68,7 +68,7 @@ def cli_main():
     # callbacks
     early_stop = EarlyStopping(monitor='val_loss', patience=100)
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    checkpoint = ModelCheckpoint(monitor='val_loss')
+    #checkpoint = ModelCheckpoint(monitor='val_loss')  # there's a built-in checkpoint already monitoring val_loss
 
     # training
     trainer = pl.Trainer(
@@ -77,7 +77,7 @@ def cli_main():
         limit_train_batches=0.1 if args.dev else 1.0,
         limit_val_batches=0.3 if args.dev else 1.0,
         profiler=args.dev,
-        callbacks=[lr_monitor, checkpoint],
+        callbacks=[early_stop, lr_monitor],
         resume_from_checkpoint=args.resume_path,
         terminate_on_nan=False,
         gradient_clip_val=0.5,
