@@ -103,9 +103,9 @@ class CVAECfg(pl.LightningModule):
         return parser
 
     def loss_function(self, resp_true, resp_pred, means, log_var, z):
-        mse = torch.nn.functional.mse_loss(resp_pred, resp_true, reduction='sum')
-        kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp())
-        loss = (mse + kld) / resp_true.size(0)
+        mse = torch.nn.functional.mse_loss(resp_pred, resp_true, reduction='sum') / resp_true.size(0)
+        kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp()) / resp_true.size(0)
+        loss = mse + kld
         return mse, kld, loss
 
     def forward(self, resp_true, c):
@@ -139,30 +139,21 @@ class CVAECfg(pl.LightningModule):
         mse, kld, loss = losses
         resp_pred, means, log_var, z = results
         resp_true, labels = batch
-        # generate logs
-        bs = batch[0].shape[0]
+        # log metrics
         # TODO add metrics: SD
         logs = {
-            'test_recon_loss': mse / bs,
-            'test_kl': kld / bs,
+            'test_recon_loss': mse,
+            'test_kl': kld,
             'test_loss': loss
         }
         self.log_dict(logs)
-        # generate reconstruction
+        # log reconstructions
+        resp_true, resp_pred = resp_true.cpu(), resp_pred.cpu()
+        labels = {k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in labels.items()}
         labels = pd.DataFrame(labels)
-        n_cols = 4
-        shape = (max(bs // n_cols, 1), n_cols)
-        fig = self.get_freqresp_figure(resp_true, resp_pred, labels, shape=shape)
+        fig = self.get_freqresp_figure(resp_true, resp_pred, labels, n_cols=8, wh_ratio=2, width=20)
         img = figure_to_tensor(fig)
-        return logs, img
-
-    def test_epoch_end(self, output_results):
-        metrics, imgs = list(zip(*output_results))
-        collated_results = default_collate(metrics)
-        img = torch.hstack(imgs)
-        avg_results = {k: torch.mean(v) for k, v in collated_results.items()}
-        self.log_dict(avg_results)
-        self.logger.experiment.add_image('Valid/resp_freq', img, self.current_epoch)
+        self.logger.experiment.add_image(f'Valid/resp_freq_{batch_idx:04}', img, self.current_epoch)
 
     def training_epoch_end(self, outputs):
         # log gradients
@@ -191,8 +182,9 @@ class CVAECfg(pl.LightningModule):
         losses = self.loss_function(resp_true, *results)
         return results, losses
 
-    def get_freqresp_figure(self, resp_true, resp_pred, labels, shape=(4, 4), width=12.0, wh_ratio=2.5, title=False):
+    def get_freqresp_figure(self, resp_true, resp_pred, labels, n_cols=4, width=12.0, wh_ratio=2.5, title=False):
         # setup plot
+        shape = (max(resp_true.shape[0] // n_cols, 1), n_cols)
         fig, axs = plt.subplots(*shape, figsize=(width, width * shape[0] / shape[1] / wh_ratio))
         for i, ax in enumerate(axs.flatten()):
             if i >= resp_true.shape[0]:
