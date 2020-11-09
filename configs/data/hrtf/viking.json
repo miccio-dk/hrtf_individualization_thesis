@@ -1,7 +1,7 @@
 {
     "dataset": "viking",
     "feature": null,
-    "test_subjects": null,
+    "test_subjects": ["kemarLast", "noPinnae2", "A"],
     "az_range": null,
     "el_range": null,
     "use_db": false

@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from .vae_incept import VAE
 
 
-# dense conditional variational autoencoder
+# convolutional variational autoencoder with inception layers
 class InceptionVAECfg(pl.LightningModule):
     model_name = 'VAE_incept'
 
@@ -44,48 +44,71 @@ class InceptionVAECfg(pl.LightningModule):
                 self.logger.experiment.add_histogram(name, params, self.current_epoch)
         # log figures
         if self.current_epoch % self.fig_freq == 0:
-            img = self.get_pred_ear_figure(self.example_input_array, self.example_input_labels)
+            # run prediction
+            ear_true = self.example_input_array.to(self.device)
+            self.eval()
+            with torch.no_grad():
+                ear_pred, means, log_var, z = self.forward(ear_true)
+            self.train()
+            ear_true = ear_true.to(self.device)
+            # generate figure
+            img = self.get_pred_ear_figure(ear_true, ear_pred)
             self.logger.experiment.add_image('Valid/ears', img, self.current_epoch)
 
-    def get_pred_ear_figure(self, ear_true, labels, n_images=6):
-        ear_true = ear_true.to(self.device)
-        # run prediction
-        self.eval()
-        with torch.no_grad():
-            ear_pred, *_ = self.forward(ear_true)
-        self.train()
-        img_true = torch.dstack(ear_true[:n_images].unbind())
-        img_pred = torch.dstack(ear_pred[:n_images].unbind())
-        img = torch.hstack((img_true, img_pred))
+    def get_pred_ear_figure(self, ear_true, ear_pred, n_cols=8):
+        bs = ear_true.shape[0]
+        n_rows = max(bs, 1) // n_cols
+        imgs = []
+        for i in range(n_rows):
+            sl = slice(i * n_cols, min((i + 1) * n_cols, bs))
+            img_true = torch.dstack(ear_true[sl].unbind())
+            img_pred = torch.dstack(ear_pred[sl].unbind())
+            img = torch.hstack((img_true, img_pred))
+            imgs.append(img)
+        img = torch.hstack(imgs)
         return img
 
-    def loss_function(self, recon_x, x, mu, logvar):
+    def loss_function(self, x, recon_x, mu, logvar):
         # https://arxiv.org/abs/1312.6114 (Appendix B)
         BCE = torch.nn.functional.binary_cross_entropy(recon_x, x, size_average=False)
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()) * self.kl_coeff
         return BCE, KLD, BCE + KLD
 
     def training_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        _, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
         self.log('train_recon_loss', mse)
         self.log('train_kl', kld)
         self.log('train_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
+        _, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
         self.log('val_recon_loss', mse)
         self.log('val_kl', kld)
         self.log('val_loss', loss)
 
     def test_step(self, batch, batch_idx):
-        mse, kld, loss = self._shared_eval(batch, batch_idx)
-        self.log('test_recon_loss', mse)
-        self.log('test_kl', kld)
-        self.log('test_loss', loss)
+        results, losses = self._shared_eval(batch, batch_idx)
+        mse, kld, loss = losses
+        ear_pred, means, log_var = results
+        ear_true, labels = batch
+        # log metrics
+        # TODO add metrics: SD
+        logs = {
+            'test_recon_loss': mse,
+            'test_kl': kld,
+            'test_loss': loss
+        }
+        self.log_dict(logs)
+        # log reconstructions
+        ear_true, ear_pred = ear_true.cpu(), ear_pred.cpu()
+        img = self.get_pred_ear_figure(ear_true, ear_pred, n_cols=8)
+        self.logger.experiment.add_image(f'Valid/ears_{batch_idx:04}', img, self.current_epoch)
 
     def _shared_eval(self, batch, batch_idx):
         ear_true, labels = batch
-        ear_pred, means, log_var = self.forward(ear_true)
-        losses = self.loss_function(ear_pred, ear_true, means, log_var)
-        return losses
+        results = self.forward(ear_true)
+        losses = self.loss_function(ear_true, *results)
+        return results, losses

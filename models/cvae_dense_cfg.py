@@ -1,11 +1,10 @@
-from argparse import ArgumentParser
 import torch
 import pandas as pd
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
+from argparse import ArgumentParser
 from torch import nn
 from .utils import figure_to_tensor, get_freqresp_plot
-from torch.utils.data._utils.collate import default_collate
 
 
 class CVAE(nn.Module):
