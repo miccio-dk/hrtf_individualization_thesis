@@ -48,7 +48,7 @@ class InceptionVAECfg(pl.LightningModule):
             ear_true = self.example_input_array.to(self.device)
             self.eval()
             with torch.no_grad():
-                ear_pred, means, log_var, z = self.forward(ear_true)
+                ear_pred, means, log_var = self.forward(ear_true)
             self.train()
             ear_true = ear_true.to(self.device)
             # generate figure

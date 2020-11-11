@@ -45,7 +45,7 @@ class SofaDataset(Dataset):
         return {
             'subj': subj,
             'ear': ['L', 'R'][int(orient[2])],
-            'az': orient[0],
+            'az': orient[0],  # TODO invert for e.g. right ear
             'el': orient[1],
         }
 

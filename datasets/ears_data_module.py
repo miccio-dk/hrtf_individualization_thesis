@@ -17,10 +17,7 @@ class EarsDataModule(pl.LightningDataModule):
         load_dotenv()
         path_basedir = os.getenv("HRTFI_DATA_BASEPATH")
         self.dataset = None
-        self.dataset_path = {
-            'ami_ears': os.path.join(path_basedir, 'ami_ears'),
-            'hutubs_ears': os.path.join(path_basedir, 'hutubs_ears')
-        }.get(dataset_type)
+        self.dataset_path = os.path.join(path_basedir, dataset_type)
         # select dataset class
         self.DS = {
             'ami_ears': AmiDataset,
