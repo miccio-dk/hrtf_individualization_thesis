@@ -38,9 +38,8 @@ class Encoder(nn.Module):
         self.MLP = nn.Sequential()
 
         for i, (in_size, out_size) in enumerate(zip(layer_sizes[:-1], layer_sizes[1:])):
-            self.MLP.add_module(
-                name='L{:d}'.format(i), module=nn.Linear(in_size, out_size))
-            self.MLP.add_module(name='A{:d}'.format(i), module=nn.ReLU())
+            self.MLP.add_module(name=f'L{i}', module=nn.Linear(in_size, out_size))
+            self.MLP.add_module(name=f'A{i}', module=nn.ReLU())
 
         self.linear_means = nn.Linear(layer_sizes[-1], latent_size)
         self.linear_log_var = nn.Linear(layer_sizes[-1], latent_size)
@@ -62,9 +61,9 @@ class Decoder(nn.Module):
         self.MLP = nn.Sequential()
 
         for i, (in_size, out_size) in enumerate(zip([input_size] + layer_sizes[:-1], layer_sizes)):
-            self.MLP.add_module(name='L{:d}'.format(i), module=nn.Linear(in_size, out_size))
+            self.MLP.add_module(name=f'L{i}', module=nn.Linear(in_size, out_size))
             if i + 1 < len(layer_sizes):
-                self.MLP.add_module(name='A{:d}'.format(i), module=nn.ReLU())
+                self.MLP.add_module(name=f'A{i}', module=nn.ReLU())
             #else:
             #    self.MLP.add_module(name='sigmoid', module=nn.Sigmoid())
 
