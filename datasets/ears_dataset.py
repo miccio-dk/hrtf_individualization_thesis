@@ -114,7 +114,7 @@ class HutubsEarsDataset(EarsDataset):
     def parse_filename(path):
         subj = int(osp.basename(path).split('_')[0][2:])
         el, az = osp.basename(osp.dirname(path)).split('_')[:2]
-        ear = osp.basename(osp.dirname(osp.dirname(path)))
+        ear = osp.basename(osp.dirname(osp.dirname(path)))[0].upper()
         return {
             'subj': f'{subj:03}',
             'ear': ear,
