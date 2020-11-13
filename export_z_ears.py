@@ -39,6 +39,7 @@ def main():
     # load model
     print(f'### Loading model {ModelClass.model_name} from {args.model_ckpt_path}...')
     model = ModelClass.load_from_checkpoint(args.model_ckpt_path)
+    model.to(args.device)
     model.eval()
     print('### Model Loaded.')
 
@@ -84,7 +85,8 @@ def main():
         lbl.append(labels)
 
     # combine
-    z = torch.cat(z).numpy()
+    z = torch.cat(z).cpu()
+    z = z.numpy()
     lbl = pd.concat(lbl)
     print(f'### Done converting. Data shapes: {z.shape} {lbl.shape}')
 

@@ -38,7 +38,7 @@ class LatentDataset(Dataset):
         else:
             keep_idx = self.labels[lbl].isin(range_)
         self.labels = self.labels[keep_idx]
-        self.z = self.z[keep_idx]
+        self.z = self.z[keep_idx.to_numpy()]
 
     def load_data(self):
         self.z = np.load(self.z_path)

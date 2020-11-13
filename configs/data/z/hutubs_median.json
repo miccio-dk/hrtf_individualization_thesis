@@ -10,7 +10,7 @@
         "z_path": "latent/z_hrtf.npy",
         "l_path": "latent/l_hrtf.pkl",
         "az_range": [0],
-        "el_range": [-45, 45],
+        "el_range": null,
         "use_pca": false
     },
     "test_subjects": ["009", "018", "027", "036", "045"]

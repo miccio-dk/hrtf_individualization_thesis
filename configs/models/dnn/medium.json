@@ -1,0 +1,7 @@
+{
+    "c": [
+        "el"
+    ],
+    "hidden_layers": [256, 256, 128, 64],
+    "dropout_rate": null
+}
