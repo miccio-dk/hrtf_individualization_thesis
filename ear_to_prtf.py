@@ -57,13 +57,15 @@ def main():
     for ModelClass, model_type in zip([EarsModelClass, LatentModelClass, HrtfModelClass], ['ears', 'latent', 'hrtf']):
         model_ckpt_path = cfg[model_type]['model_ckpt_path']
         print(f'### Loading model {ModelClass.model_name} from {model_ckpt_path}...')
-        models[model_type] = ModelClass.load_from_checkpoint(model_ckpt_path)
-        models[model_type].eval()
+        model = ModelClass.load_from_checkpoint(model_ckpt_path)
+        model.to(args.device)
+        model.eval()
+        models[model_type] = model
     print('### Models Loaded.')
 
     # load and process ear image
     print(f'### Loading and processing ear picture from {args.ear_path}...')
-    img = Image.open(args.ear_path, 'r')
+    img = Image.open(args.ear_path, 'r').convert('RGB')
     transforms = Compose([
         Resize(img_size),
         ToTensor(),
