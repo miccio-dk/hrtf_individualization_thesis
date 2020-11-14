@@ -126,6 +126,8 @@ def main():
         extent = [f[0], f[-1], el_range[0], el_range[-1]]
         im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=20, cmap='viridis')
         ax.set_title('PRTF along median plane')
+        ax.set_ylabel('Elevation')
+        ax.set_ylabel('Frequency [kHz]')
         fig.colorbar(im, ax=ax)
         fig.tight_layout()
         fig.savefig(output_path_surf)
