@@ -151,7 +151,7 @@ class CVAECfg(pl.LightningModule):
         labels = pd.DataFrame(labels)
         fig = self.get_freqresp_figure(resp_true, resp_pred, labels, n_cols=8, wh_ratio=2, width=20)
         img = figure_to_tensor(fig)
-        self.logger.experiment.add_image(f'Valid/resp_freq_{batch_idx:04}', img, self.current_epoch)
+        self.logger.experiment.add_image(f'test/resp_freq_{batch_idx:04}', img, self.current_epoch)
 
     def training_epoch_end(self, outputs):
         # log gradients

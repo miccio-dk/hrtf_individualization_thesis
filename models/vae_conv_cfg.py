@@ -177,7 +177,7 @@ class VAECfg(pl.LightningModule):
         # log reconstructions
         ear_true, ear_pred = ear_true.cpu(), ear_pred.cpu()
         img = self.get_pred_ear_figure(ear_true, ear_pred, n_cols=8)
-        self.logger.experiment.add_image(f'Valid/ears_{batch_idx:04}', img, self.current_epoch)
+        self.logger.experiment.add_image(f'test/ears_{batch_idx:04}', img, self.current_epoch)
 
     def training_epoch_end(self, outputs):
         # log gradients
