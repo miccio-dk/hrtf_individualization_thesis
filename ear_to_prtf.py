@@ -102,14 +102,15 @@ def main():
     # generate figure
     if args.view:
         print('### Generating figure...')
-        fig_output_path = os.path.splitext(args.output_path)[0] + '.png'
-        n_cols = 6
-        n_rows = math.ceil(len(el_range) / n_cols)
-        ax_size = (4, 2.5)
+        output_path_resps = os.path.splitext(args.output_path)[0] + '_resps.png'
+        output_path_surf = os.path.splitext(args.output_path)[0] + '_surf.png'
         nfft = 256
         d = 1. / 48000
         f = rfftfreq(nfft, d)
-        figsize = n_cols * ax_size[0], n_rows * ax_size[1]
+        # make first figure (individual responses)
+        n_cols = 6
+        n_rows = math.ceil(len(el_range) / n_cols)
+        figsize = n_cols * 4, n_rows * 2.4
         fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
         for i, ax in enumerate(axs.flatten()):
             if i < len(el_range):
@@ -118,9 +119,17 @@ def main():
             else:
                 ax.axis('off')
         fig.suptitle('PRTF along median plane')
-        fig.tight_layout(rect=[0, 0, 1, 0.99])
-        fig.savefig(fig_output_path)
-        print(f'### Figure stored in {fig_output_path}')
+        fig.tight_layout(rect=[0, 0, 1, 0.98])
+        fig.savefig(output_path_resps)
+        # make second figure (surface plot)
+        fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+        extent = [f[0], f[-1], el_range[0], el_range[-1]]
+        im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=20, cmap='viridis')
+        ax.set_title('PRTF along median plane')
+        fig.colorbar(im, ax=ax)
+        fig.tight_layout()
+        fig.savefig(output_path_surf)
+        print(f'### Figure stored in {output_path_resps} and {output_path_surf}')
 
     # store
     print(f'### Storing data in {args.output_path}...')
