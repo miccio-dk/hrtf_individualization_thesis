@@ -1,0 +1,8 @@
+{
+    "dataset_type": "ami_ears",
+    "img_size": [256, 256],
+    "mode": "bw",
+    "augmentations": ["gaussian", "s&p", "speckle"],
+    "test_subjects": ["000", "001", "002", "003", "004"],
+    "features": null
+}
