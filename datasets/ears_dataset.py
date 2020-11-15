@@ -1,4 +1,5 @@
 import random
+import json
 import os.path as osp
 from glob import glob
 from PIL import Image
@@ -50,6 +51,7 @@ class EarsDataset(Dataset):
         # apply transforms
         if self.transforms:
             img = self.transforms(ear)
+        # flip images in AMI
         if 'feature' in labels and labels['feature'] != 'back':
             img = RandomHorizontalFlip(1.)(img)
         # apply augmentations
@@ -146,6 +148,81 @@ class HutubsEarsDataset(EarsDataset):
                 continue
             # load image
             img = Image.open(path, 'r').convert('RGB')
+            # append data
+            self.ears.append(img)
+            self.labels.append(label)
+
+
+# AWE ears dataset
+class AweDataset(EarsDataset):
+    def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
+                 augmentations=None, mode='rgb'):
+        super(AweDataset, self).__init__(
+            data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
+            img_size=img_size, augmentations=augmentations, mode=mode)
+        self.load_data()
+
+    # works for filepath in the form '/basepath/XXX/YYY.png'
+    @staticmethod
+    def generate_labels(path, item):
+        subj = osp.basename(osp.dirname(path))
+        ear = item['d'].upper()
+        return {
+            'subj': subj,
+            'ear': ear,
+        }
+
+    def load_data(self):
+        dir_paths = glob(osp.join(self.data_path, '*/'))
+        for dir_path in dir_paths:
+            # load annotations
+            with open(osp.join(dir_path, 'annotations.json'), 'r') as fp:
+                ann = json.load(fp)
+            # load individual images
+            for k, item in ann['data'].items():
+                # extract infos
+                path = osp.join(dir_path, item['file'])
+                label = AweDataset.generate_labels(path, item)
+                # filter by subject
+                if not self.is_subject_included(label['subj']):
+                    continue
+                # load image
+                img = Image.open(path, 'r').convert('RGB')
+                # mirror if right
+                if label['ear'] == 'R':
+                    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+                # append data
+                self.ears.append(img)
+                self.labels.append(label)
+
+
+# IITD ears dataset
+class IitdDataset(EarsDataset):
+    def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
+                 augmentations=None, mode='rgb'):
+        super(IitdDataset, self).__init__(
+            data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
+            img_size=img_size, augmentations=augmentations, mode=mode)
+        self.load_data()
+
+    # works for filepath in the form '/basepath/raw//XXX_n.png'
+    @staticmethod
+    def parse_filename(path):
+        subj = osp.splitext(osp.basename(path))[0].split('_')[0]
+        return {
+            'subj': subj,
+        }
+
+    def load_data(self):
+        file_paths = glob(osp.join(self.data_path, 'raw', '*.bmp'))
+        for path in file_paths:
+            # extract infos
+            label = IitdDataset.parse_filename(path)
+            # filter by subject
+            if not self.is_subject_included(label['subj']):
+                continue
+            # load image and preprocess
+            img = Image.open(path, 'r').convert('RGB').transpose(Image.FLIP_LEFT_RIGHT)
             # append data
             self.ears.append(img)
             self.labels.append(label)

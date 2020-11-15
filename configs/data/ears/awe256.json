@@ -1,0 +1,7 @@
+{
+    "dataset_type": "awe_ears",
+    "img_size": [256, 256],
+    "mode": "bw",
+    "augmentations": ["gaussian", "s&p", "speckle"],
+    "test_subjects": [ "001", "002", "003", "004", "005"]
+}

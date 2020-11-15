@@ -2,10 +2,10 @@ import os
 import pytorch_lightning as pl
 from dotenv import load_dotenv
 from torch.utils.data import DataLoader, random_split
-from .ears_dataset import AmiDataset, HutubsEarsDataset
+from .ears_dataset import AmiDataset, HutubsEarsDataset, AweDataset, IitdDataset
 
 class EarsDataModule(pl.LightningDataModule):
-    def __init__(self, dataset_type, num_workers=4, batch_size=16, split=0.2, test_subjects=None, **kwargs):
+    def __init__(self, dataset_type, num_workers=4, batch_size=16, split=0.1, test_subjects=None, **kwargs):
         super().__init__()
         # store params
         self.num_workers = num_workers
@@ -21,7 +21,9 @@ class EarsDataModule(pl.LightningDataModule):
         # select dataset class
         self.DS = {
             'ami_ears': AmiDataset,
-            'hutubs_ears': HutubsEarsDataset
+            'hutubs_ears': HutubsEarsDataset,
+            'awe_ears': AweDataset,
+            'iitd_ears': IitdDataset
         }.get(dataset_type)
 
     def setup(self, stage=None):
