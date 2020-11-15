@@ -80,10 +80,8 @@ class CVAECfg(pl.LightningModule):
 
     def __init__(self, nfft, cfg):
         super().__init__()
-        # TODO sort
         self.size_input = nfft // 2 + 1
         self.save_hyperparameters()
-        #self.example_input_array = torch.zeros(1, )
         self.grad_freq = 50
         self.fig_freq = 50
         self.c_labels = cfg['labels']

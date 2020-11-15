@@ -23,8 +23,7 @@ def cli_main():
     parser.add_argument('--test_ckpt_path', default=None, type=str)
     parser.add_argument('--gpus', default=None)
     # model args
-    # TODO use correct class or make 'add_model_specific_args' a method of model parents
-    parser = EndToEndCfg.add_model_specific_args(parser)
+    parser = CVAECfg.add_model_specific_args(parser)
     # parse
     args = parser.parse_args()
     is_training = args.test_ckpt_path is None
@@ -66,7 +65,6 @@ def cli_main():
         model = ModelClass(nfft=args.nfft, cfg=model_cfg)
 
         # pass first batch of validation data for plotting
-        # TODO this part should change depending on the model
         if args.model_type == 'cvae_dense':
             dm.prepare_data()
             dm.setup(stage=None)

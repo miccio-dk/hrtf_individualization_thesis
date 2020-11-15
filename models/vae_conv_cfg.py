@@ -129,7 +129,6 @@ class VAECfg(pl.LightningModule):
         return parser
 
     def loss_function(self, ear_true, ear_pred, means, log_var, z):
-        # TODO replace binary cross entropy
         mse = torch.nn.functional.mse_loss(ear_pred, ear_true, reduction='sum') / ear_true.size(0)
         kld = -0.5 * torch.sum(1 + log_var - means.pow(2) - log_var.exp()) * self.kl_coeff / ear_true.size(0)
         loss = mse + kld
