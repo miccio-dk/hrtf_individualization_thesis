@@ -13,5 +13,5 @@
         "el_range": null,
         "use_pca": false
     },
-    "test_subjects": ["009", "018", "027", "036", "045"]
+    "test_subjects": ["002", "003", "004", "005"]
 }

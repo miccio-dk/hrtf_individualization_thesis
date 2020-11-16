@@ -1,17 +1,20 @@
+import os
 import random
 import json
 import os.path as osp
 from glob import glob
+from dotenv import load_dotenv
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor, Grayscale, Resize, RandomHorizontalFlip
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, ConcatDataset
 from .data_transforms import AddRandomNoise
 
 
 # generic ear dataset
 class EarsDataset(Dataset):
-    def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96), augmentations=None, mode='rgb'):
+    def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96), augmentations=None, mode='rgb', no_labels=False):
         self.data_path = data_path
+        self.no_labels = no_labels
         # setup necessary transforms
         self.transforms = [
             Resize(img_size),
@@ -59,17 +62,20 @@ class EarsDataset(Dataset):
             augmentation = random.choice(self.augmentations)
             if augmentation:
                 img = augmentation(img)
-        sample = (img, labels)
+        if self.no_labels:
+            sample = (img, labels['subj'])
+        else:
+            sample = (img, labels)
         return sample
 
 
-# ami ear pictures dataset
+# AMI ear pictures dataset
 class AmiDataset(EarsDataset):
     def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
-                 augmentations=None, mode='rgb', features=None):
+                 augmentations=None, mode='rgb', no_labels=False, features=None):
         super(AmiDataset, self).__init__(
             data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
-            img_size=img_size, augmentations=augmentations, mode=mode)
+            img_size=img_size, augmentations=augmentations, mode=mode, no_labels=no_labels)
         self.features = features
         self.load_data()
 
@@ -100,13 +106,13 @@ class AmiDataset(EarsDataset):
             self.labels.append(label)
 
 
-# hutubs ear renderings dataset
+# HUTUBS ear renderings dataset
 class HutubsEarsDataset(EarsDataset):
     def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
-                 augmentations=None, mode='rgb', az_range=None, el_range=None):
+                 augmentations=None, mode='rgb', no_labels=False, az_range=None, el_range=None):
         super(HutubsEarsDataset, self).__init__(
             data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
-            img_size=img_size, augmentations=augmentations, mode=mode)
+            img_size=img_size, augmentations=augmentations, mode=mode, no_labels=no_labels)
         self.az_range = az_range
         self.el_range = el_range
         self.load_data()
@@ -156,10 +162,10 @@ class HutubsEarsDataset(EarsDataset):
 # AWE ears dataset
 class AweDataset(EarsDataset):
     def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
-                 augmentations=None, mode='rgb'):
+                 augmentations=None, mode='rgb', no_labels=False):
         super(AweDataset, self).__init__(
             data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
-            img_size=img_size, augmentations=augmentations, mode=mode)
+            img_size=img_size, augmentations=augmentations, mode=mode, no_labels=no_labels)
         self.load_data()
 
     # works for filepath in the form '/basepath/XXX/YYY.png'
@@ -199,10 +205,10 @@ class AweDataset(EarsDataset):
 # IITD ears dataset
 class IitdDataset(EarsDataset):
     def __init__(self, data_path, keep_subjects=None, skip_subjects=None, img_size=(96, 96),
-                 augmentations=None, mode='rgb'):
+                 augmentations=None, mode='rgb', no_labels=False):
         super(IitdDataset, self).__init__(
             data_path, keep_subjects=keep_subjects, skip_subjects=skip_subjects,
-            img_size=img_size, augmentations=augmentations, mode=mode)
+            img_size=img_size, augmentations=augmentations, mode=mode, no_labels=no_labels)
         self.load_data()
 
     # works for filepath in the form '/basepath/raw//XXX_n.png'
@@ -226,3 +232,39 @@ class IitdDataset(EarsDataset):
             # append data
             self.ears.append(img)
             self.labels.append(label)
+
+
+# combination of the other datasets
+class CombinedEarsDataset(Dataset):
+    def __init__(self, data_path=None, keep_subjects={}, skip_subjects={}, img_size=(96, 96), augmentations=None, mode='rgb', datasets_configs={}):
+        load_dotenv()
+        path_basedir = os.getenv("HRTFI_DATA_BASEPATH")
+        DS = {
+            'ami_ears': AmiDataset,
+            'hutubs_ears': HutubsEarsDataset,
+            'awe_ears': AweDataset,
+            'iitd_ears': IitdDataset
+        }
+        # init and merge datasets
+        datasets = []
+        for dataset_type, kwargs in datasets_configs.items():
+            dataset_path = os.path.join(path_basedir, dataset_type)
+            _skip_subjects = skip_subjects.get(dataset_type)
+            _keep_subjects = keep_subjects.get(dataset_type)
+            ds = DS[dataset_type](
+                data_path=dataset_path,
+                keep_subjects=_keep_subjects,
+                skip_subjects=_skip_subjects,
+                img_size=img_size,
+                augmentations=augmentations,
+                mode=mode,
+                no_labels=True,
+                **datasets_configs[dataset_type])
+            datasets.append(ds)
+        self.dataset = ConcatDataset(datasets)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        return self.dataset[idx]

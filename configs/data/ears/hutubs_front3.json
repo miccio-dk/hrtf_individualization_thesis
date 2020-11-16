@@ -1,9 +1,0 @@
-{
-    "dataset_type": "hutubs_ears",
-    "img_size": [96, 96],
-    "mode": "bw3",
-    "augmentations": ["gaussian", "s&p", "speckle"],
-    "test_subjects": ["009", "018", "027", "036", "045"],
-    "az_range": [0],
-    "el_range": [0]
-}

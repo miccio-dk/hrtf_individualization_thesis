@@ -3,5 +3,5 @@
     "img_size": [96, 96],
     "mode": "bw",
     "augmentations": ["gaussian", "s&p", "speckle"],
-    "test_subjects": [ "001", "002", "003", "004", "005"]
+    "test_subjects": ["001", "002", "003", "004", "005"]
 }

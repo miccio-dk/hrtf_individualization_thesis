@@ -3,6 +3,6 @@
     "feature": "notches",
     "test_subjects": ["kemarLast", "noPinnae2", "A"],
     "az_range": [0],
-    "el_range": [-45, 80],
-    "use_db": false
+    "el_range": null,
+    "use_db": true
 }

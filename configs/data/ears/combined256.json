@@ -1,0 +1,23 @@
+{
+    "dataset_type": "combined",
+    "img_size": [256, 256],
+    "mode": "bw",
+    "augmentations": ["gaussian", "s&p", "speckle"],
+    "test_subjects": {
+        "ami_ears":    ["000", "001", "002", "003", "004"],
+        "hutubs_ears": ["002", "003", "004", "005"],
+        "iitd_ears":   ["001", "002", "003", "004", "005"],
+        "awe_ears":    ["001", "002", "003", "004", "005"]
+    },
+    "datasets_configs": {
+        "ami_ears": {
+            "features": null
+        },
+        "hutubs_ears": {
+            "az_range": null,
+            "el_range": null
+        },
+        "iitd_ears": {},
+        "awe_ears": {}
+    }
+}
