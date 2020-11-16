@@ -4,18 +4,18 @@
     "mode": "bw",
     "augmentations": ["gaussian", "s&p", "speckle"],
     "test_subjects": {
-        "ami_ears":    ["000", "001", "002", "003", "004"],
         "hutubs_ears": ["002", "003", "004", "005"],
-        "iitd_ears":   ["001", "002", "003", "004", "005"],
-        "awe_ears":    ["001", "002", "003", "004", "005"]
+        "ami_ears":    ["000", "001", "002"],
+        "iitd_ears":   ["001", "002", "003"],
+        "awe_ears":    ["001", "002", "003"]
     },
     "datasets_configs": {
-        "ami_ears": {
-            "features": null
-        },
         "hutubs_ears": {
             "az_range": null,
             "el_range": null
+        },
+        "ami_ears": {
+            "features": null
         },
         "iitd_ears": {},
         "awe_ears": {}
