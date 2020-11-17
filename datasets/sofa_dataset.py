@@ -42,10 +42,15 @@ class SofaDataset(Dataset):
 
     @staticmethod
     def get_label(subj, orient):
+        # adjust azimuth: (0, 360) -> (-180, 180) and invert right
+        ear = ['L', 'R'][int(orient[2])]
+        az = (orient[0] - 180) % 360 - 180
+        if ear == 'R':
+            az = -az
         return {
             'subj': subj,
-            'ear': ['L', 'R'][int(orient[2])],
-            'az': orient[0],  # TODO invert for e.g. right ear
+            'ear': ear,
+            'az': az,
             'el': orient[1],
         }
 
