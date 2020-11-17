@@ -167,7 +167,7 @@ class CVAECfg(pl.LightningModule):
             self.train()
             resp_true, resp_pred = resp_true.cpu(), resp_pred.cpu()
             # generate figure
-            fig = self.get_freqresp_figure(resp_true, resp_pred, self.example_input_labels, title=True)
+            fig = self.get_freqresp_figure(resp_true, resp_pred, self.example_input_labels, title=True, max_rows=6)
             img = figure_to_tensor(fig)
             self.logger.experiment.add_image('Valid/resp_freq', img, self.current_epoch)
 
@@ -178,9 +178,12 @@ class CVAECfg(pl.LightningModule):
         losses = self.loss_function(resp_true, *results)
         return results, losses
 
-    def get_freqresp_figure(self, resp_true, resp_pred, labels, n_cols=4, width=12.0, wh_ratio=2.5, title=False):
+    def get_freqresp_figure(self, resp_true, resp_pred, labels, n_cols=4, max_rows=None, width=12.0, wh_ratio=2.5, title=False):
         # setup plot
-        shape = (max(resp_true.shape[0] // n_cols, 1), n_cols)
+        n_rows = max(resp_true.shape[0] // n_cols, 1)
+        if max_rows:
+            n_rows = min(n_rows, max_rows)
+        shape = (n_rows, n_cols)
         fig, axs = plt.subplots(*shape, figsize=(width, width * shape[0] / shape[1] / wh_ratio))
         for i, ax in enumerate(axs.flatten()):
             if i >= resp_true.shape[0]:
@@ -188,7 +191,7 @@ class CVAECfg(pl.LightningModule):
             get_freqresp_plot(resp_true[i], resp_pred[i], labels.iloc[i], ax, convert_db=False)
         if title:
             fig.suptitle('Frequency responses')
-            fig.tight_layout(rect=[0, 0, 1, 0.98])
+            fig.tight_layout(rect=[0, 0, 1, 0.99])
         else:
             fig.tight_layout()
         return fig
