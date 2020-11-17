@@ -1,0 +1,9 @@
+{
+    "dataset_type": "hutubs_edges",
+    "img_size": [256, 256],
+    "mode": "bw",
+    "augmentations": ["gaussian", "speckle"],
+    "test_subjects": ["002", "003", "004", "005"],
+    "az_range": null,
+    "el_range": null
+}

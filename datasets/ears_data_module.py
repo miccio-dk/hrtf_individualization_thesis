@@ -22,6 +22,8 @@ class EarsDataModule(pl.LightningDataModule):
         DS = {
             'ami_ears': AmiDataset,
             'hutubs_ears': HutubsEarsDataset,
+            'hutubs_edges': HutubsEarsDataset,
+            'hutubs_depth': HutubsEarsDataset,
             'awe_ears': AweDataset,
             'iitd_ears': IitdDataset,
             'combined': CombinedEarsDataset
