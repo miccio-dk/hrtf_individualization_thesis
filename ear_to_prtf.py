@@ -87,13 +87,13 @@ def main():
 
     # predict datapoints
     print('### Predicting data...')
-    ear = ear.unsqueeze(-1)
+    ear = ear.unsqueeze(0)
     c = el_range.unsqueeze(-1)
     ear, c = ear.to(args.device), c.to(args.device)
     with torch.no_grad():
         # ear to z_ear
         _, z_ear, *_ = models['ears'](ear)
-        z_ears = torch.stack([z_ear] * len(el_range))
+        z_ears = z_ear.repeat(len(el_range), 1)
         # z_ear + c to z_hrtf
         x = torch.cat((z_ears, c), dim=-1)
         z_hrtf = models['latent'](x)
