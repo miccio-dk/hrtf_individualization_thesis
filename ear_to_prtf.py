@@ -16,6 +16,21 @@ from models.dnn_cfg import DNNCfg
 from models.cvae_dense_cfg import CVAECfg
 
 
+def create_range(_range):
+    _range[1] += 1
+    if len(_range) == 3:
+        _range = torch.arange(*_range)
+    elif len(_range) == 2:
+        _range = torch.arange(*_range, 10)
+    return _range
+
+def plot_surface(fig, ax, hrtf, extent, az):
+    im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=0, cmap='viridis')
+    ax.set_title(f'PRTF along vertical plane, az = {az}')
+    ax.set_ylabel('Elevation')
+    ax.set_ylabel('Frequency [kHz]')
+    fig.colorbar(im, ax=ax)
+
 def main():
     # load env
     load_dotenv()
@@ -74,21 +89,27 @@ def main():
         Grayscale(img_channels)
     ])
     ear = transforms(img)
+    ear = ear.unsqueeze(0)
     print('### Done loading and processing.')
 
-    # calculate range
-    # TODO support azimuth too
+    # calculate elevation range
     el_range = cfg['el_range']
-    el_range[1] += 1
-    if len(el_range) == 3:
-        el_range = torch.arange(*el_range)
-    elif len(el_range) == 2:
-        el_range = torch.arange(*el_range, 10)
+    if el_range:
+        el_range = create_range(el_range)
+    # calculate azimuth range
+    az_range = cfg['az_range']
+    if az_range:
+        az_range = create_range(az_range)
+    # create c tensor
+    if el_range is not None and az_range is not None:
+        c = torch.cartesian_prod(el_range, az_range)
+    elif el_range is not None:
+        c = el_range.unsqueeze(-1)
+    elif az_range is not None:
+        c = az_range.unsqueeze(-1)
 
     # predict datapoints
     print('### Predicting data...')
-    ear = ear.unsqueeze(0)
-    c = el_range.unsqueeze(-1)
     ear, c = ear.to(args.device), c.to(args.device)
     with torch.no_grad():
         # ear to z_ear
@@ -110,26 +131,32 @@ def main():
         f = rfftfreq(args.nfft, d=1. / args.sr)
         # make first figure (individual responses)
         n_cols = 6
-        n_rows = math.ceil(len(el_range) / n_cols)
+        n_rows = math.ceil(len(c) / n_cols)
         figsize = n_cols * 4, n_rows * 2.4
         fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
         for i, ax in enumerate(axs.flatten()):
-            if i < len(el_range):
+            if i < len(c):
                 ax.plot(f, hrtf[i])
-                ax.set_title(f'{el_range[i]}')
+                ax.set_title(f'{c[i].numpy()}')
             else:
                 ax.axis('off')
-        fig.suptitle('PRTF along median plane')
+        fig.suptitle('PRTFs')
         fig.tight_layout(rect=[0, 0, 1, 0.98])
         fig.savefig(output_path_resps)
-        # make second figure (surface plot)
-        fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+        # make second figure (surface plots)
+        if c.shape[1] > 1:
+            n_planes = len(az_range)
+        else:
+            n_planes = 1
+            az_range = [0]
+        fig, axs = plt.subplots(n_planes, 1, figsize=(12, 10 * n_planes), squeeze=False)
         extent = [f[0], f[-1], el_range[0], el_range[-1]]
-        im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=20, cmap='viridis')
-        ax.set_title('PRTF along median plane')
-        ax.set_ylabel('Elevation')
-        ax.set_ylabel('Frequency [kHz]')
-        fig.colorbar(im, ax=ax)
+        for i, az in enumerate(az_range):
+            if c.shape[1] > 1:
+                curr_hrtf = hrtf[c[:, 1] == az]
+            else:
+                curr_hrtf = hrtf
+            plot_surface(fig, axs[0, i], curr_hrtf, extent, az)
         fig.tight_layout()
         fig.savefig(output_path_surf)
         print(f'### Figure stored in {output_path_resps} and {output_path_surf}')
