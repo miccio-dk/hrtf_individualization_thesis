@@ -28,6 +28,8 @@ def main():
     parser.add_argument('cfg_path', type=str)
     parser.add_argument('ear_path', type=str)
     parser.add_argument('--device', default='cpu', type=str)
+    parser.add_argument('--nfft', default=256, type=int)
+    parser.add_argument('--sr', default=44100, type=int)
     parser.add_argument('--output_path', default=default_output_path, type=str)
     parser.add_argument('--view', action='store_true')
     # parse
@@ -85,14 +87,15 @@ def main():
 
     # predict datapoints
     print('### Predicting data...')
-    ears = torch.stack([ear] * len(el_range))
+    ear = ear.unsqueeze(-1)
     c = el_range.unsqueeze(-1)
-    ears, c = ears.to(args.device), c.to(args.device)
+    ear, c = ear.to(args.device), c.to(args.device)
     with torch.no_grad():
         # ear to z_ear
-        _, z_ear, *_ = models['ears'](ears)
+        _, z_ear, *_ = models['ears'](ear)
+        z_ears = torch.stack([z_ear] * len(el_range))
         # z_ear + c to z_hrtf
-        x = torch.cat((z_ear, c), dim=-1)
+        x = torch.cat((z_ears, c), dim=-1)
         z_hrtf = models['latent'](x)
         # z_hrtf to hrtf
         hrtf = models['hrtf'].cvae.dec(z_hrtf, c)
@@ -104,9 +107,7 @@ def main():
         print('### Generating figure...')
         output_path_resps = os.path.splitext(args.output_path)[0] + '_resps.png'
         output_path_surf = os.path.splitext(args.output_path)[0] + '_surf.png'
-        nfft = 256
-        d = 1. / 48000
-        f = rfftfreq(nfft, d)
+        f = rfftfreq(args.nfft, d=1. / args.sr)
         # make first figure (individual responses)
         n_cols = 6
         n_rows = math.ceil(len(el_range) / n_cols)
