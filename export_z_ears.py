@@ -51,7 +51,9 @@ def main():
     # pick dataset
     DatasetClass = {
         'ami_ears': AmiDataset,
-        'hutubs_ears': HutubsEarsDataset
+        'hutubs_ears': HutubsEarsDataset,
+        'hutubs_depth': HutubsEarsDataset,
+        'hutubs_edges': HutubsEarsDataset
     }.get(data_cfg['dataset_type'])
     # load data
     print(f'### Loading data from {dataset_path}...')

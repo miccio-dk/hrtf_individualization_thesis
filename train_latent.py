@@ -51,6 +51,7 @@ def cli_main():
     if is_training:
         # get first batch of validation data
         dm.setup(stage=None)
+        print(f'### Data len (train val test): {len(dm.data_train)} {len(dm.data_val)} {len(dm.data_test)}')
         z_ears, z_hrtf_true, labels = next(iter(dm.val_dataloader()))
 
         # load model configs

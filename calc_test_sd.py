@@ -9,9 +9,9 @@ from tqdm import tqdm
 from scipy.fft import rfftfreq
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
-from lightning.models.cvae_dense_cfg import CVAECfg
-from lightning.datasets.anthro_sofa_dataset import AnthroSofaDataset
-from lightning.datasets.data_transforms import ToHrtf, ToDB, ToTensor
+from models.cvae_dense_cfg import CVAECfg
+from datasets.anthro_sofa_dataset import AnthroSofaDataset
+from datasets.data_transforms import ToHrtf, ToDB, ToTensor
 
 
 def main():
