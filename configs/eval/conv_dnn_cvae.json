@@ -14,5 +14,5 @@
         "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_0/checkpoints/epoch=20.ckpt"
     },
     "el_range": [-45, 80, 5],
-    "az_range": [-180, 0, 180]
+    "az_range": null
 }

@@ -7,12 +7,12 @@
     },
     "latent": {
         "model_type": "dnn",
-        "model_ckpt_path": "./logs/DNN_zz/version_1/checkpoints/epoch="
+        "model_ckpt_path": "./logs/DNN_zz/version_1/checkpoints/epoch=9999.ckpt"
     },
     "hrtf": {
         "model_type": "cvae_dense",
         "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_4/checkpoints/epoch=4950.ckpt"
     },
-    "el_range": [-80, 80, 5],
+    "el_range": [-80, 80, 10],
     "az_range": [-180, 0, 180]
 }

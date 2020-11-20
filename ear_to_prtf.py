@@ -25,7 +25,7 @@ def create_range(_range):
     return _range
 
 def plot_surface(fig, ax, hrtf, extent, az):
-    im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=0, cmap='viridis')
+    im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=20, cmap='viridis')
     ax.set_title(f'PRTF along vertical plane, az = {az}')
     ax.set_ylabel('Elevation')
     ax.set_ylabel('Frequency [kHz]')
@@ -114,13 +114,14 @@ def main():
     with torch.no_grad():
         # ear to z_ear
         _, z_ear, *_ = models['ears'](ear)
-        z_ears = z_ear.repeat(len(el_range), 1)
+        z_ears = z_ear.repeat(c.shape[0], 1)
         # z_ear + c to z_hrtf
         x = torch.cat((z_ears, c), dim=-1)
         z_hrtf = models['latent'](x)
         # z_hrtf to hrtf
         hrtf = models['hrtf'].cvae.dec(z_hrtf, c)
     hrtf = hrtf.cpu().numpy()
+    c = c.cpu().numpy()
     print(f'### Done predicting. Data shape: {hrtf.shape}')
 
     # generate figure
@@ -137,7 +138,7 @@ def main():
         for i, ax in enumerate(axs.flatten()):
             if i < len(c):
                 ax.plot(f, hrtf[i])
-                ax.set_title(f'{c[i].numpy()}')
+                ax.set_title(f'{c[i]}')
             else:
                 ax.axis('off')
         fig.suptitle('PRTFs')
@@ -146,17 +147,18 @@ def main():
         # make second figure (surface plots)
         if c.shape[1] > 1:
             n_planes = len(az_range)
+            az_range = az_range.numpy()
         else:
             n_planes = 1
             az_range = [0]
         fig, axs = plt.subplots(n_planes, 1, figsize=(12, 10 * n_planes), squeeze=False)
-        extent = [f[0], f[-1], el_range[0], el_range[-1]]
+        extent = [f[0], f[-1], el_range[-1], el_range[0]]
         for i, az in enumerate(az_range):
             if c.shape[1] > 1:
-                curr_hrtf = hrtf[c[:, 1] == az]
+                curr_hrtf = hrtf[c[:,1] == az]
             else:
                 curr_hrtf = hrtf
-            plot_surface(fig, axs[0, i], curr_hrtf, extent, az)
+            plot_surface(fig, axs[i, 0], curr_hrtf, extent, az)
         fig.tight_layout()
         fig.savefig(output_path_surf)
         print(f'### Figure stored in {output_path_resps} and {output_path_surf}')
