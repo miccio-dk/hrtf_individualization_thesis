@@ -19,25 +19,15 @@ from datasets.data_transforms import ToHrtf, ToDB
 from datasets.data_transforms import ToTensor as ToHrtfTensor
 
 
-def create_range(_range):
-    _range[1] += 1
-    if len(_range) == 3:
-        _range = torch.arange(*_range)
-    elif len(_range) == 2:
-        _range = torch.arange(*_range, 10)
-    return _range
-
-def get_matching_resps_true(dataset_path, subj, transforms, az_range, el_range, ear):
-    hrtf_ds = SofaDataset(
-        data_path=dataset_path,
-        keep_subjects=[subj],
-        transforms=Compose(transforms),
-        az_range=az_range,
-        el_range=el_range,
-        ears=[ear])
-    labels = pd.DataFrame([l for h, l in hrtf_ds])
-    idxs = labels.sort_values('el').index
-    hrtf = torch.stack([hrtf_ds[i][0] for i in idxs])
+def matching_resp_true(ds, labels, subj, ear, c):
+    subj_labels = labels[(labels['ear'] == ear) & (labels['subj'] == subj)]
+    hrtf_list = []
+    for el, az in c.numpy():
+        if ear == 'R' and az == -180:
+            az = 180
+        idx = subj_labels.index[(subj_labels['el'] == el) & (subj_labels['az'] == az)][0]
+        hrtf_list.append(ds[idx][0])
+    hrtf = torch.stack(hrtf_list)
     return hrtf
 
 def main():
@@ -48,9 +38,9 @@ def main():
     # args
     parser = ArgumentParser()
     # trainer args
-    parser.add_argument('cfg_path', type=str)
-    parser.add_argument('ear_data_cfg_path', type=str)
-    parser.add_argument('hrtf_data_cfg_path', type=str)
+    parser.add_argument('eval_cfg_path', type=str)
+    parser.add_argument('ear_cfg_path', type=str)
+    parser.add_argument('hrtf_cfg_path', type=str)
     parser.add_argument('--device', default='cpu', type=str)
     parser.add_argument('--nfft', default=256, type=int)
     parser.add_argument('--sr', default=44100, type=int)
@@ -60,7 +50,7 @@ def main():
     args = parser.parse_args()
 
     # load configs
-    with open(args.cfg_path, 'r') as fp:
+    with open(args.eval_cfg_path, 'r') as fp:
         cfg = json.load(fp)
     img_size = cfg['ears']['img_size']
     img_channels = cfg['ears']['img_channels']
@@ -90,7 +80,7 @@ def main():
     print('### Models Loaded.')
 
     # load ears data
-    with open(args.ear_data_cfg_path, 'r') as fp:
+    with open(args.ear_cfg_path, 'r') as fp:
         ear_data_cfg = json.load(fp)
     dataset_path = os.path.join(path_basedir, ear_data_cfg['dataset_type'])
     transforms = Compose([
@@ -105,33 +95,29 @@ def main():
         mode=ear_data_cfg['mode'],
         az_range=[0],
         el_range=[0])
-    print(f'### Loaded {len(ears_ds)} data points.')
+    print(f'### Loaded {len(ears_ds)} ears data points.')
 
-    # calculate elevation range
-    el_range = cfg['el_range']
-    if el_range:
-        el_range = create_range(el_range)
-    # calculate azimuth range
-    az_range = cfg['az_range']
-    if az_range:
-        az_range = create_range(az_range)
-    # create c tensor
-    if el_range is not None and az_range is not None:
-        c = torch.cartesian_prod(el_range, az_range)
-    elif el_range is not None:
-        c = el_range.unsqueeze(-1)
-        az_range = [0]
-    elif az_range is not None:
-        c = az_range.unsqueeze(-1)
-        el_range = [0]
-    c = c.to(args.device)
-
-    # hrtf data configs
+    # load hrtf data
     print(f'### Loading hrtf data from {dataset_path}...')
-    with open(args.hrtf_data_cfg_path, 'r') as fp:
+    with open(args.hrtf_cfg_path, 'r') as fp:
         hrtf_data_cfg = json.load(fp)
     dataset_path = os.path.join(path_basedir, hrtf_data_cfg['dataset'])
     transforms = [ToHrtf(args.nfft), ToDB(), ToHrtfTensor()]
+    hrtf_ds = SofaDataset(
+        data_path=dataset_path,
+        keep_subjects=hrtf_data_cfg['test_subjects'],
+        transforms=Compose(transforms),
+        az_range=hrtf_data_cfg['az_range'],
+        el_range=hrtf_data_cfg['el_range'])
+    hrtf_ds_labels = pd.DataFrame([l for h, l in hrtf_ds])
+    hrtf_labels = hrtf_ds_labels[hrtf_ds_labels['subj'] == hrtf_data_cfg['test_subjects'][0]]
+    hrtf_labels = hrtf_labels[hrtf_labels['ear'] == 'L']
+    print(f'### Loaded {len(hrtf_ds)} hrtf data points ({len(hrtf_labels) * 2} per subject).')
+
+    # create c tensor
+    c = [torch.tensor(hrtf_labels[lbl].values) for lbl in models['hrtf'].c_labels]
+    c = torch.stack(c, dim=-1).float()
+    c = c.to(args.device)
 
     # run prediction
     resps_true = []
@@ -149,7 +135,8 @@ def main():
             z_hrtf = models['latent'](x)
             # z_hrtf to hrtf
             resp_pred = models['hrtf'].cvae.dec(z_hrtf, c)
-        resp_true = get_matching_resps_true(dataset_path, labels['subj'], transforms, az_range, el_range, labels['ear'])
+        resp_true = matching_resp_true(hrtf_ds, hrtf_ds_labels, labels['subj'], labels['ear'], c)
+        assert len(resp_true) == len(resp_pred)
         # store results
         resps_true.append(resp_true)
         resps_pred.append(resp_pred)

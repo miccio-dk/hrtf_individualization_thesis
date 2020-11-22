@@ -1,7 +1,5 @@
 {
-    "c": [
-        "el"
-    ],
+    "c": ["el", "az"],
     "hidden_layers": [32, 32, 32],
     "dropout_rate": 0.2
 }

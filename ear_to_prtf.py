@@ -22,7 +22,7 @@ def create_range(_range):
         _range = torch.arange(*_range)
     elif len(_range) == 2:
         _range = torch.arange(*_range, 10)
-    return _range
+    return _range.flip(0)
 
 def plot_surface(fig, ax, hrtf, extent, az):
     im = ax.imshow(hrtf, extent=extent, aspect='auto', vmin=-80, vmax=20, cmap='viridis')
@@ -165,7 +165,7 @@ def main():
 
     # store
     print(f'### Storing data in {args.output_path}...')
-    sio.savemat(args.output_path, {'synthesized_hrtf': hrtf})
+    sio.savemat(args.output_path, {'synthesized_hrtf': hrtf, 'pos': c})
     print('### Done!')
 
 
