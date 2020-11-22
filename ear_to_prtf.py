@@ -155,7 +155,7 @@ def main():
         extent = [f[0], f[-1], el_range[-1], el_range[0]]
         for i, az in enumerate(az_range):
             if c.shape[1] > 1:
-                curr_hrtf = hrtf[c[:,1] == az]
+                curr_hrtf = hrtf[c[:, 1] == az]
             else:
                 curr_hrtf = hrtf
             plot_surface(fig, axs[i, 0], curr_hrtf, extent, az)

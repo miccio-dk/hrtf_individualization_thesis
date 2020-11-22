@@ -13,6 +13,6 @@
         "model_type": "cvae_dense",
         "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_0/checkpoints/epoch=20.ckpt"
     },
-    "el_range": [-45, 80, 5],
+    "el_range": [-90, 90, 10],
     "az_range": null
 }
