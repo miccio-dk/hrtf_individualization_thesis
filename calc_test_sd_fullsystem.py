@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 from dotenv import load_dotenv
 from tqdm import tqdm
 from scipy.fft import rfftfreq
-from torchvision.transforms import Compose, ToTensor, Grayscale, Resize
 from models.vae_conv_cfg import VAECfg
 from models.vae_resnet_cfg import ResNetVAECfg
 from models.vae_incept_cfg import InceptionVAECfg
@@ -45,15 +44,12 @@ def main():
     parser.add_argument('--nfft', default=256, type=int)
     parser.add_argument('--sr', default=44100, type=int)
     parser.add_argument('--sd_range', default=(500, 16000), type=int, nargs=2)
-    parser.add_argument('--batch_size', default=32, type=int)
     # parse
     args = parser.parse_args()
 
     # load configs
     with open(args.eval_cfg_path, 'r') as fp:
         cfg = json.load(fp)
-    img_size = cfg['ears']['img_size']
-    img_channels = cfg['ears']['img_channels']
 
     # pick models
     EarsModelClass = {
@@ -83,18 +79,14 @@ def main():
     with open(args.ear_cfg_path, 'r') as fp:
         ear_data_cfg = json.load(fp)
     dataset_path = os.path.join(path_basedir, ear_data_cfg['dataset_type'])
-    transforms = Compose([
-        Resize(img_size),
-        ToTensor(),
-        Grayscale(img_channels)
-    ])
     print(f'### Loading ears data from {dataset_path}...')
     ears_ds = HutubsEarsDataset(
         data_path=dataset_path,
         keep_subjects=ear_data_cfg['test_subjects'],
         mode=ear_data_cfg['mode'],
         az_range=[0],
-        el_range=[0])
+        el_range=[0],
+        img_size=ear_data_cfg['img_size'])
     print(f'### Loaded {len(ears_ds)} ears data points.')
 
     # load hrtf data
