@@ -1,5 +1,6 @@
 import os
 import json
+import warnings
 import torch
 import numpy as np
 import pandas as pd
@@ -17,12 +18,13 @@ from datasets.ears_dataset import HutubsEarsDataset
 from datasets.sofa_dataset import SofaDataset
 from datasets.data_transforms import ToHrtf, ToDB
 from datasets.data_transforms import ToTensor as ToHrtfTensor
+warnings.simplefilter("ignore", UserWarning)
 
 
 def matching_resp_true(ds, labels, subj, ear, c):
     subj_labels = labels[(labels['ear'] == ear) & (labels['subj'] == subj)]
     hrtf_list = []
-    for el, az in c.numpy():
+    for el, az in c.cpu().numpy():
         if ear == 'R' and az == -180:
             az = 180
         idx = subj_labels.index[(subj_labels['el'] == el) & (subj_labels['az'] == az)][0]
