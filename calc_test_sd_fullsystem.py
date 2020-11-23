@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from dotenv import load_dotenv
 from tqdm import tqdm
 from scipy.fft import rfftfreq
+from torchvision.transforms import Compose
 from models.vae_conv_cfg import VAECfg
 from models.vae_resnet_cfg import ResNetVAECfg
 from models.vae_incept_cfg import InceptionVAECfg
