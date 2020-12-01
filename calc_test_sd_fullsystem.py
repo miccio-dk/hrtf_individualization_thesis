@@ -105,7 +105,7 @@ def main():
         az_range=hrtf_data_cfg['az_range'],
         el_range=hrtf_data_cfg['el_range'])
     hrtf_ds_labels = pd.DataFrame([l for h, l in hrtf_ds])
-    hrtf_labels = hrtf_ds_labels[hrtf_ds_labels['subj'] == hrtf_data_cfg['test_subjects'][0]]
+    hrtf_labels = hrtf_ds_labels[hrtf_ds_labels['subj'] == hrtf_ds_labels['subj'][0]]
     hrtf_labels = hrtf_labels[hrtf_labels['ear'] == 'L']
     print(f'### Loaded {len(hrtf_ds)} hrtf data points ({len(hrtf_labels) * 2} per subject).')
 

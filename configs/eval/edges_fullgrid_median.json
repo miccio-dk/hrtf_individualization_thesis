@@ -7,7 +7,7 @@
     },
     "latent": {
         "model_type": "dnn",
-        "model_ckpt_path": "./logs/DNN_zz/version_2/checkpoints/epoch=6826.ckpt"
+        "model_ckpt_path": "./logs/DNN_zz/version_3/checkpoints/epoch=9973.ckpt"
     },
     "hrtf": {
         "model_type": "cvae_dense",
