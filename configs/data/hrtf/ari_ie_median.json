@@ -2,7 +2,8 @@
     "dataset": "ari_inear",
     "feature": null,
     "test_subjects": ["029", "056", "093", "135", "002"],
-    "az_range": [0],
+    "az_range": [0, -180, 180],
     "el_range": null,
-    "use_db": true
+    "use_db": true,
+    "coordinate_system": "vertical"
 }

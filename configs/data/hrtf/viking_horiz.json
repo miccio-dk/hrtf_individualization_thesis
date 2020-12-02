@@ -4,5 +4,6 @@
     "test_subjects": ["kemarLast", "noPinnae2"],
     "az_range": null,
     "el_range": [0],
-    "use_db": true
+    "use_db": true,
+    "coordinate_system": "vertical"
 }

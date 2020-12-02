@@ -2,7 +2,8 @@
     "dataset": "cipic",
     "feature": null,
     "test_subjects": ["003", "008", "009"],
-    "az_range": [0],
+    "az_range": [0, -180, 180],
     "el_range": null,
-    "use_db": true
+    "use_db": true,
+    "coordinate_system": "vertical"
 }

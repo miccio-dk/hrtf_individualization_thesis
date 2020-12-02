@@ -2,7 +2,8 @@
     "dataset": "viking",
     "feature": "notches",
     "test_subjects": ["kemarLast", "noPinnae2", "A"],
-    "az_range": [0],
+    "az_range": [0, -180, 180],
     "el_range": null,
-    "use_db": true
+    "use_db": true,
+    "coordinate_system": "vertical"
 }

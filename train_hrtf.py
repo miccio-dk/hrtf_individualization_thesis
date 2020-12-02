@@ -51,7 +51,8 @@ def cli_main():
         batch_size=args.batch_size,
         test_subjects=data_cfg['test_subjects'],
         az_range=data_cfg['az_range'],
-        el_range=data_cfg['el_range'])
+        el_range=data_cfg['el_range'],
+        coordinate_system=data_cfg['coordinate_system'])
 
     # logger
     log_name = '{}_{}_{}'.format(ModelClass.model_name, data_cfg['dataset'], data_cfg['feature'])

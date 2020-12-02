@@ -6,11 +6,22 @@ from glob import glob
 from torch.utils.data import Dataset
 
 
+def vertical_to_interaural(az_deg, el_deg):
+    az = np.deg2rad(az_deg)
+    el = np.deg2rad(el_deg)
+    sin_az = np.sin(az) * np.cos(el)
+    sin_el = np.sin(el) / np.sqrt(np.sin(el) ** 2 + np.cos(az) ** 2 * np.cos(el) ** 2)
+    az_new = np.rad2deg(np.arcsin(sin_az))
+    el_new = np.rad2deg(np.arcsin(sin_el))
+    if az_deg > 90 and az_deg < 270:
+        el_new = 180 - el_new
+    return az_new, el_new
+
 # generic sofa dataset
 class SofaDataset(Dataset):
     def __init__(self, data_path, transforms=None,
                  keep_subjects=None, skip_subjects=None,
-                 az_range=None, el_range=None, ears=['L', 'R']):
+                 az_range=None, el_range=None, ears=['L', 'R'], coordinate_system='vertical'):
         self.data_path = data_path
         self.transforms = transforms
         self.keep_subjects = keep_subjects
@@ -18,6 +29,7 @@ class SofaDataset(Dataset):
         self.az_range = az_range
         self.el_range = el_range
         self.ears = ears
+        self.coordinate_system = coordinate_system
         self.hrirs = []
         self.labels = []
         self.load_data()
@@ -40,18 +52,20 @@ class SofaDataset(Dataset):
     def path_to_subj(path):
         return osp.splitext(osp.basename(path))[0][5:]
 
-    @staticmethod
-    def get_label(subj, orient):
+    def get_label(subj, orient, coordinate_system):
         # adjust azimuth: (0, 360) -> (-180, 180) and invert right
         ear = ['L', 'R'][int(orient[2])]
+        el = orient[1]
         az = (orient[0] - 180) % 360 - 180
         if ear == 'R':
             az = -az
+        if coordinate_system == 'interaural':
+            az, el = vertical_to_interaural(az, el)
         return {
             'subj': subj,
             'ear': ear,
             'az': az,
-            'el': orient[1],
+            'el': el,
         }
 
     @staticmethod
