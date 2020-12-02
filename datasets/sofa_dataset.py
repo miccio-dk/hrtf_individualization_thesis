@@ -86,7 +86,7 @@ class SofaDataset(Dataset):
         orients[:n_orients, 2] = 0
         orients[n_orients:, 2] = 1
         # generate labels
-        labels = [SofaDataset.get_label(subj, orient) for orient in orients]
+        labels = [SofaDataset.get_label(subj, orient, self.coordinate_system) for orient in orients]
         sofa_file.close()
         return hrirs, labels
 
