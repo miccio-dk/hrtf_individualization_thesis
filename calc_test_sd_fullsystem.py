@@ -21,6 +21,18 @@ from datasets.data_transforms import ToTensor as ToHrtfTensor
 warnings.simplefilter("ignore", UserWarning)
 
 
+def sd(resps_true, resps_pred, idx):
+    _sd = np.sqrt(np.mean((resps_true[idx] - resps_pred[idx]) ** 2))
+    return _sd
+
+def sd_minimum(resps_true, resps_pred, idx, offs_range=[-5, 5], step=0.1):
+    offsets = np.arange(*offs_range, step)
+    bs = resps_true.shape[0]
+    _sd = [[sd(resps_true[i], resps_pred[i]+offs, idx) for offs in offsets] for i in range(bs)]
+    _sd = np.array(_sd)
+    _sd = np.amin(_sd, axis=1)
+    return _sd.mean()
+
 def matching_resp_true(ds, labels, subj, ear, c):
     subj_labels = labels[(labels['ear'] == ear) & (labels['subj'] == subj)]
     hrtf_list = []
@@ -144,8 +156,7 @@ def main():
     # calculate SD
     f = rfftfreq(args.nfft, d=1. / args.sr)
     idx = (f > args.sd_range[0]) & (f < args.sd_range[1])
-
-    sd = np.sqrt(np.mean((resps_true[:, idx] - resps_pred[:, idx]) ** 2))
+    sd = sd_minimum(resps_true, resps_pred, idx)
     print(f'### Spectral distortion (dB) = {sd}')
 
 
