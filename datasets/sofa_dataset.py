@@ -69,7 +69,7 @@ class SofaDataset(Dataset):
         }
 
     @staticmethod
-    def load_sofa_subj(path):
+    def load_sofa_subj(path, coordinate_system):
         subj = SofaDataset.path_to_subj(path)
         #print('loading subj', subj, '...')
         sofa_file = sofa.Database.open(path)
@@ -86,7 +86,7 @@ class SofaDataset(Dataset):
         orients[:n_orients, 2] = 0
         orients[n_orients:, 2] = 1
         # generate labels
-        labels = [SofaDataset.get_label(subj, orient, self.coordinate_system) for orient in orients]
+        labels = [SofaDataset.get_label(subj, orient, coordinate_system) for orient in orients]
         sofa_file.close()
         return hrirs, labels
 
@@ -124,7 +124,7 @@ class SofaDataset(Dataset):
             if (self.skip_subjects is not None) and (subj in self.skip_subjects):
                 continue
             # load subject
-            curr_hrirs, curr_labels = SofaDataset.load_sofa_subj(path)
+            curr_hrirs, curr_labels = SofaDataset.load_sofa_subj(path, self.coordinate_system)
             # filter data
             curr_hrirs, curr_labels = self.filter_data(curr_hrirs, curr_labels)
             # append data
