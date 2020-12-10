@@ -4,14 +4,14 @@
         "l_path": "latent_picture_fullgrid/l_ears.pkl",
         "az_range": [0],
         "el_range": [0],
-        "use_pca": false
+        "n_pca": null
     },
     "hrtf": {
         "z_path": "latent_picture_fullgrid/z_hrtf.npy",
         "l_path": "latent_picture_fullgrid/l_hrtf.pkl",
         "az_range": null,
         "el_range": null,
-        "use_pca": false
+        "n_pca": null
     },
     "test_subjects": ["002", "003", "004", "005"]
 }

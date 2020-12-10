@@ -21,8 +21,8 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         self.args_hrtf['z_path'] = os.path.join(path_basedir, self.args_hrtf['z_path'])
         self.args_hrtf['l_path'] = os.path.join(path_basedir, self.args_hrtf['l_path'])
         self.dataset_name = '{}{}'.format(
-            'pca' if self.args_ears['use_pca'] else 'z',
-            'pca' if self.args_hrtf['use_pca'] else 'z'
+            'pca' if self.args_ears['n_pca'] else 'z',
+            'pca' if self.args_hrtf['n_pca'] else 'z'
         )
 
     def setup(self, stage=None):

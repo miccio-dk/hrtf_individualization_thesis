@@ -1,34 +1,49 @@
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
 
 # generic latent space dataset
 class LatentDataset(Dataset):
-    def __init__(self, z_path, l_path, keep_subjects=None, skip_subjects=None, az_range=None, el_range=None, use_pca=False):
+    def __init__(self, z_path, l_path, keep_subjects=None, skip_subjects=None, az_range=None, el_range=None, n_pca=None):
         self.z_path = z_path
         self.l_path = l_path
         self.keep_subjects = keep_subjects
         self.skip_subjects = skip_subjects
         self.az_range = az_range
         self.el_range = el_range
-        self.use_pca = use_pca
+        self.n_pca = n_pca
         self.load_data()
-        # TODO implement PCA
 
     def __len__(self):
         return len(self.z)
 
     def __getitem__(self, idx):
         if isinstance(idx, int):
-            z = self.z[idx]
             labels = self.labels.iloc[idx]
         if isinstance(idx, tuple):
             subj, ear = idx
             idx = (self.labels['subj'] == subj) & (self.labels['ear'] == ear)
-            z = self.z[idx]
             labels = self.labels[idx]
-        sample = (z, labels)
+        if self.n_pca:
+            data = self.z_pc[idx]
+        else:
+            data = self.z[idx]
+        #print(z.shape, z_pc.shape)
+        sample = (data, labels)
         return sample
+
+    def pca_transform(self, z):
+        z_scaled = self.scaler.transform(z)
+        z_pc = self.pca.transform(z_scaled)
+        return z_pc
+
+    def pca_inverse_transform(self, z_pc):
+        z_scaled = self.pca.inverse_transform(z_pc)
+        z = self.scaler.inverse_transform(z_scaled)
+        return z
 
     def lbl_in_range(self, lbl, range_):
         if range_ is None:
@@ -55,6 +70,15 @@ class LatentDataset(Dataset):
         # filter by coord
         self.lbl_in_range('az', self.az_range)
         self.lbl_in_range('el', self.el_range)
+        # apply pca
+        if self.n_pca:
+            self.generate_pca()
+
+    def generate_pca(self):
+        self.scaler = StandardScaler()
+        self.pca = PCA(n_components=self.n_pca)
+        z_scaled = self.scaler.fit_transform(self.z)
+        self.z_pc = self.pca.fit_transform(z_scaled)
 
 
 # ears + hrtf latent spaces dataset
