@@ -11,7 +11,7 @@
         "l_path": "latent/hrtf_fullgrid/l_hrtf.pkl",
         "az_range": null,
         "el_range": null,
-        "n_pca": null
+        "n_pca": 16
     },
     "test_subjects": ["002", "003", "004", "005"]
 }
