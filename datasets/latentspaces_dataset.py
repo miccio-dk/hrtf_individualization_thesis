@@ -35,16 +35,6 @@ class LatentDataset(Dataset):
         sample = (data, labels)
         return sample
 
-    def pca_transform(self, z):
-        z_scaled = self.scaler.transform(z)
-        z_pc = self.pca.transform(z_scaled)
-        return z_pc
-
-    def pca_inverse_transform(self, z_pc):
-        z_scaled = self.pca.inverse_transform(z_pc)
-        z = self.scaler.inverse_transform(z_scaled)
-        return z
-
     def lbl_in_range(self, lbl, range_):
         if range_ is None:
             return
@@ -72,14 +62,27 @@ class LatentDataset(Dataset):
         self.lbl_in_range('el', self.el_range)
         # apply pca
         if self.n_pca:
-            self.generate_pca()
+            self.z_pc, self.scaler, self.pca = LatentDataset.generate_pca(self.z, self.n_pca)
 
-    def generate_pca(self):
-        self.scaler = StandardScaler()
-        self.pca = PCA(n_components=self.n_pca)
-        z_scaled = self.scaler.fit_transform(self.z)
-        self.z_pc = self.pca.fit_transform(z_scaled)
+    @staticmethod
+    def generate_pca(z, n_pca):
+        scaler = StandardScaler()
+        pca = PCA(n_components=n_pca)
+        z_scaled = scaler.fit_transform(z)
+        z_pc = pca.fit_transform(z_scaled)
+        return z_pc, scaler, pca
 
+    @staticmethod
+    def pca_transform(z, scaler, pca):
+        z_scaled = scaler.transform(z)
+        z_pc = pca.transform(z_scaled)
+        return z_pc
+
+    @staticmethod
+    def pca_inverse_transform(z_pc, scaler, pca):
+        z_scaled = pca.inverse_transform(z_pc)
+        z = scaler.inverse_transform(z_scaled)
+        return z
 
 # ears + hrtf latent spaces dataset
 class LatentEarsHrtfDataset(Dataset):

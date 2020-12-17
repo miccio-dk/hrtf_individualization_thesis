@@ -30,9 +30,9 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         if stage == 'fit' or stage is None:
             args_ears = dict(self.args_ears, skip_subjects=self.test_subjects)
             args_hrtf = dict(self.args_hrtf, skip_subjects=self.test_subjects)
-            dataset = LatentEarsHrtfDataset(args_ears, args_hrtf)
-            lengths = self._calc_splits(dataset, self.split)
-            self.data_train, self.data_val = random_split(dataset, lengths)
+            self.dataset = LatentEarsHrtfDataset(args_ears, args_hrtf)
+            lengths = self._calc_splits(self.dataset, self.split)
+            self.data_train, self.data_val = random_split(self.dataset, lengths)
             self.dims = self.data_train[0][0].shape
         # assign test split(s)
         if stage == 'test' or stage is None:

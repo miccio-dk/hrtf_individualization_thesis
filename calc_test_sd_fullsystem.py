@@ -16,6 +16,8 @@ from models.dnn_cfg import DNNCfg
 from models.cvae_dense_cfg import CVAECfg
 from datasets.ears_dataset import HutubsEarsDataset
 from datasets.sofa_dataset import SofaDataset
+from datasets.latentspaces_dataset import LatentDataset
+from datasets.latentspaces_data_module import LatentSpacesDataModule
 from datasets.data_transforms import ToHrtf, ToDB
 from datasets.data_transforms import ToTensor as ToHrtfTensor
 warnings.simplefilter("ignore", UserWarning)
@@ -28,7 +30,7 @@ def sd(resps_true, resps_pred, idx):
 def sd_minimum(resps_true, resps_pred, idx, offs_range=[-5, 5], step=0.1):
     offsets = np.arange(*offs_range, step)
     bs = resps_true.shape[0]
-    _sd = [[sd(resps_true[i], resps_pred[i]+offs, idx) for offs in offsets] for i in range(bs)]
+    _sd = [[sd(resps_true[i], resps_pred[i] + offs, idx) for offs in offsets] for i in range(bs)]
     _sd = np.array(_sd)
     _sd = np.amin(_sd, axis=1)
     return _sd.mean()
@@ -59,6 +61,7 @@ def main():
     parser.add_argument('--nfft', default=256, type=int)
     parser.add_argument('--sr', default=44100, type=int)
     parser.add_argument('--sd_range', default=(500, 16000), type=int, nargs=2)
+    parser.add_argument('--z_cfg_path', default=None, type=str)
     # parse
     args = parser.parse_args()
 
@@ -121,6 +124,26 @@ def main():
     hrtf_labels = hrtf_labels[hrtf_labels['ear'] == 'L']
     print(f'### Loaded {len(hrtf_ds)} hrtf data points ({len(hrtf_labels) * 2} per subject).')
 
+    # if needed, load pca
+    n_pca_hrtf = cfg['n_pca']['hrtf']
+    if n_pca_hrtf:
+        try:
+            # load z_hrtf cfg
+            with open(args.z_cfg_path, 'r') as fp:
+                z_cfg = json.load(fp)
+            # init data loader
+            dm = LatentSpacesDataModule(
+                **z_cfg,
+                num_workers=0,
+                batch_size=32)
+            dm.setup(stage=None)
+            z_train = dm.dataset.ds_hrtf.z
+        except Exception as e:
+            print(f'Error loading z_hrtf config file {args.z_cfg_path}')
+            raise e
+        # calculate loadings and scores on train set
+        z_pc_train, scaler, pca = LatentDataset.generate_pca(z_train, n_pca=n_pca_hrtf)
+
     # create c tensor
     c = [torch.tensor(hrtf_labels[lbl].values) for lbl in models['hrtf'].c_labels]
     c = torch.stack(c, dim=-1).float()
@@ -140,6 +163,11 @@ def main():
             # z_ear + c to z_hrtf
             x = torch.cat((z_ears, c), dim=-1)
             z_hrtf = models['latent'](x)
+            # if pca (hrtf), z_pc_hrtf to z_hrtf
+            if n_pca_hrtf:
+                z_hrtf = z_hrtf.cpu()
+                z_hrtf = LatentDataset.pca_inverse_transform(z_hrtf, scaler, pca)
+                z_hrtf = z_hrtf.to(args.device)
             # z_hrtf to hrtf
             resp_pred = models['hrtf'].cvae.dec(z_hrtf, c)
         resp_true = matching_resp_true(hrtf_ds, hrtf_ds_labels, labels['subj'], labels['ear'], c)
