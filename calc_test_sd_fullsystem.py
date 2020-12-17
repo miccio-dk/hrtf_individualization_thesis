@@ -62,6 +62,7 @@ def main():
     parser.add_argument('--sr', default=44100, type=int)
     parser.add_argument('--sd_range', default=(500, 16000), type=int, nargs=2)
     parser.add_argument('--z_cfg_path', default=None, type=str)
+    parser.add_argument('--force_c', action="store_true")
     # parse
     args = parser.parse_args()
 
@@ -146,6 +147,8 @@ def main():
 
     # create c tensor
     c = [torch.tensor(hrtf_labels[lbl].values) for lbl in models['hrtf'].c_labels]
+    if args.force_c and len(c) == 1:
+        c.append(torch.zeros_like(c[0]))
     c = torch.stack(c, dim=-1).float()
     c = c.to(args.device)
 
@@ -169,7 +172,8 @@ def main():
                 z_hrtf = LatentDataset.pca_inverse_transform(z_hrtf, scaler, pca)
                 z_hrtf = z_hrtf.to(args.device)
             # z_hrtf to hrtf
-            resp_pred = models['hrtf'].cvae.dec(z_hrtf, c)
+            c2 = c[:,0:1] if args.force_c else c
+            resp_pred = models['hrtf'].cvae.dec(z_hrtf, c2)
         resp_true = matching_resp_true(hrtf_ds, hrtf_ds_labels, labels['subj'], labels['ear'], c)
         assert len(resp_true) == len(resp_pred)
         # store results
