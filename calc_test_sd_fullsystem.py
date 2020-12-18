@@ -189,7 +189,7 @@ def main():
     f = rfftfreq(args.nfft, d=1. / args.sr)
     idx = (f > args.sd_range[0]) & (f < args.sd_range[1])
     sd = sd_minimum(resps_true, resps_pred, idx)
-    print(f'### Spectral distortion (dB) = {sd}')
+    print(f'### Spectral distortion (dB) = {sd:.2f}')
 
 
 if __name__ == '__main__':
