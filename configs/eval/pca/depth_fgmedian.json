@@ -14,7 +14,7 @@
         "model_type": "cvae_dense",
         "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_2/checkpoints/epoch=4626.ckpt"
     },
-    "el_range": [-90, 270, 10],
-    "az_range": [0, 0, 0],
+    "el_range": [-90, 90, 10],
+    "az_range": [-180, 0, 180],
     "n_pca": {"ears": null, "hrtf": 16}
 }
