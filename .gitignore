@@ -146,3 +146,4 @@ result_logs/
 .vscode/
 TODO.md
 script_cmds.md
+.DS_Store

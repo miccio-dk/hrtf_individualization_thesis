@@ -76,8 +76,8 @@ class Encoder(nn.Module):
             self.conv_stack.add_module(name=f'block_{i}', module=_conv_block(in_channels, out_channels))
         self.conv_out_shape = _calc_output_shape(input_shape, self.conv_stack)
         linear_size = np.prod(self.conv_out_shape)
-        self.linear_means = _lin_block(linear_size, latent_size)
-        self.linear_log_var = _lin_block(linear_size, latent_size)
+        self.linear_means = nn.Linear(linear_size, latent_size)
+        self.linear_log_var = nn.Linear(linear_size, latent_size)
 
     def forward(self, x):
         x = self.conv_stack(x)
