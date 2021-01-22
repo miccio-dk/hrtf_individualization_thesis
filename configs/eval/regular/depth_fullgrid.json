@@ -1,13 +1,13 @@
 {
     "ears": {
         "model_type": "vae_incept",
-        "model_ckpt_path": "./logs/VAE_incept_combined/version_0/checkpoints/epoch=478.ckpt",
+        "model_ckpt_path": "./logs/VAE_incept_hutubs_depth/version_1/checkpoints/epoch=221.ckpt",
         "img_size": [256, 256],
         "img_channels": 1
     },
     "latent": {
         "model_type": "dnn",
-        "model_ckpt_path": "./logs/DNN_image_fgmedian/version_0/checkpoints/epoch=*.ckpt"
+        "model_ckpt_path": "./logs/DNN_depth_fullgrid/version_0/checkpoints/epoch=*.ckpt"
     },
     "hrtf": {
         "model_type": "cvae_dense",

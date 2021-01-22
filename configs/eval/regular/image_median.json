@@ -7,11 +7,11 @@
     },
     "latent": {
         "model_type": "dnn",
-        "model_ckpt_path": "./logs/DNN_image_fgmedian/version_0/checkpoints/epoch=*.ckpt"
+        "model_ckpt_path": "./logs/DNN_image_median/version_0/checkpoints/epoch=*.ckpt"
     },
     "hrtf": {
         "model_type": "cvae_dense",
-        "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_2/checkpoints/epoch=4626.ckpt"
+        "model_ckpt_path": "./logs/CVAE_dense_hutubs_None/version_4/checkpoints/epoch=4950.ckpt"
     },
     "el_range": [-90, 90, 10],
     "az_range": [-180, 0, 180]
