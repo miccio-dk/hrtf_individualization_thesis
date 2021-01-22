@@ -2,7 +2,7 @@
     "dataset": "hutubs",
     "feature": null,
     "test_subjects": ["002", "003", "004", "005"],
-    "az_range": [0, -180, 180],
+    "az_range": [-1, 1],
     "el_range": null,
     "use_db": true,
     "coordinate_system": "interaural"
