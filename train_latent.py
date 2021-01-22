@@ -20,7 +20,8 @@ def cli_main():
     parser.add_argument('--patience', default=100, type=int)
     parser.add_argument('--dev', action='store_true')
     parser.add_argument('--test_ckpt_path', default=None, type=str)
-    parser.add_argument('--gpus', default=None)
+    parser.add_argument('--gpus', default=1)
+    parser.add_argument('--training_name', default=None)
     # model args
     parser = DNNCfg.add_model_specific_args(parser)
     # parse
@@ -46,7 +47,7 @@ def cli_main():
         batch_size=args.batch_size)
 
     # logger
-    log_name = '{}_{}'.format(ModelClass.model_name, dm.dataset_name)
+    log_name = '{}_{}'.format(ModelClass.model_name, args.training_name or dm.dataset_name)
     logger = TensorBoardLogger('logs', name=log_name, log_graph=False)
 
     if is_training:
