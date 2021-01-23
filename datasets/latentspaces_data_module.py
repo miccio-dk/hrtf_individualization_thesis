@@ -61,4 +61,6 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         val_subjs = all_subjs[idx:]
         train_idx = self.dataset.ds_hrtf.labels['subj'].isin(train_subjs)
         val_idx = self.dataset.ds_hrtf.labels['subj'].isin(val_subjs)
+        train_idx = train_idx[train_idx].index.values
+        val_idx = val_idx[val_idx].index.values
         return train_idx, val_idx
