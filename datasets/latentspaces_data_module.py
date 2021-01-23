@@ -1,7 +1,8 @@
 import os
+import random
 import pytorch_lightning as pl
 from dotenv import load_dotenv
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from .latentspaces_dataset import LatentEarsHrtfDataset
 
 class LatentSpacesDataModule(pl.LightningDataModule):
@@ -31,8 +32,9 @@ class LatentSpacesDataModule(pl.LightningDataModule):
             args_ears = dict(self.args_ears, skip_subjects=self.test_subjects)
             args_hrtf = dict(self.args_hrtf, skip_subjects=self.test_subjects)
             self.dataset = LatentEarsHrtfDataset(args_ears, args_hrtf)
-            lengths = self._calc_splits(self.dataset, self.split)
-            self.data_train, self.data_val = random_split(self.dataset, lengths)
+            train_idx, val_idx = self._calc_splits(self.dataset, self.split)
+            self.data_train = Subset(self.dataset, train_idx)
+            self.data_val = Subset(self.dataset, val_idx)
             self.dims = self.data_train[0][0].shape
         # assign test split(s)
         if stage == 'test' or stage is None:
@@ -52,7 +54,11 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         return DataLoader(self.data_test, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
     def _calc_splits(self, dataset, split):
-        data_len = len(dataset)
-        val_len = int(data_len * split)
-        lengths = [data_len - val_len, val_len]
-        return lengths
+        all_subjs = self.dataset.ds_hrtf.labels['subj'].unique()
+        all_subjs = random.shuffle(all_subjs)
+        idx = int(split * len(all_subjs))
+        train_subjs = all_subjs[:idx]
+        val_subjs = all_subjs[idx:]
+        train_idx = self.dataset.ds_hrtf.labels['subj'].isin(train_subjs)
+        val_idx = self.dataset.ds_hrtf.labels['subj'].isin(val_subjs)
+        return train_idx, val_idx
