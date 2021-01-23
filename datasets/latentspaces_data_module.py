@@ -57,8 +57,8 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         all_subjs = self.dataset.ds_hrtf.labels['subj'].unique()
         random.shuffle(all_subjs)
         idx = int(split * len(all_subjs))
-        train_subjs = all_subjs[:idx]
-        val_subjs = all_subjs[idx:]
+        train_subjs = all_subjs[idx:]
+        val_subjs = all_subjs[:idx]
         train_idx = self.dataset.ds_hrtf.labels['subj'].isin(train_subjs)
         val_idx = self.dataset.ds_hrtf.labels['subj'].isin(val_subjs)
         train_idx = train_idx[train_idx].index.values
