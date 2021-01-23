@@ -21,7 +21,7 @@ class LatentDataset(Dataset):
         return len(self.z)
 
     def __getitem__(self, idx):
-        if isinstance(idx, int):
+        if isinstance(idx, (int, np.integer)):
             labels = self.labels.iloc[idx]
         if isinstance(idx, tuple):
             subj, ear = idx
