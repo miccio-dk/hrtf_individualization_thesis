@@ -1,0 +1,17 @@
+{
+    "ears": {
+        "z_path": "latent/ear_edge/z_ears.npy",
+        "l_path": "latent/ear_edge/l_ears.pkl",
+        "az_range": [0],
+        "el_range": [0],
+        "n_pca": null
+    },
+    "hrtf": {
+        "z_path": "latent/hrtf_interaural_fullgrid/z_hrtf.npy",
+        "l_path": "latent/hrtf_interaural_fullgrid/l_hrtf.pkl",
+        "az_range": [-1, 1],
+        "el_range": null,
+        "n_pca": null
+    },
+    "test_subjects": ["002", "003", "004", "005"]
+}
