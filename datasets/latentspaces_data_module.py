@@ -55,7 +55,7 @@ class LatentSpacesDataModule(pl.LightningDataModule):
 
     def _calc_splits(self, dataset, split):
         all_subjs = self.dataset.ds_hrtf.labels['subj'].unique()
-        all_subjs = random.shuffle(all_subjs)
+        random.shuffle(all_subjs)
         idx = int(split * len(all_subjs))
         train_subjs = all_subjs[:idx]
         val_subjs = all_subjs[idx:]
