@@ -5,6 +5,7 @@ import torch
 import scipy.io as sio
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
+from glob import glob
 from dotenv import load_dotenv
 from PIL import Image
 from scipy.fft import rfftfreq
@@ -73,6 +74,7 @@ def main():
     models = {}
     for ModelClass, model_type in zip([EarsModelClass, LatentModelClass, HrtfModelClass], ['ears', 'latent', 'hrtf']):
         model_ckpt_path = cfg[model_type]['model_ckpt_path']
+        model_ckpt_path = glob(model_ckpt_path)[0]
         print(f'### Loading model {ModelClass.model_name} from {model_ckpt_path}...')
         model = ModelClass.load_from_checkpoint(model_ckpt_path)
         model.to(args.device)
