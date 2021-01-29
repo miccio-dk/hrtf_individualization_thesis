@@ -75,7 +75,7 @@ def cli_main():
             model.example_input_labels = pd.DataFrame(val_labels)
 
         # callbacks
-        early_stop = EarlyStopping(monitor='val_loss', patience=100)
+        early_stop = EarlyStopping(monitor='val_loss', patience=200)
         lr_monitor = LearningRateMonitor(logging_interval='epoch')
         #checkpoint = ModelCheckpoint(monitor='val_loss')  # there's a built-in checkpoint already monitoring val_loss
 

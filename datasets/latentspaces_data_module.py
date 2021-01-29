@@ -1,5 +1,6 @@
 import os
 import random
+import numpy as np
 import pytorch_lightning as pl
 from dotenv import load_dotenv
 from torch.utils.data import DataLoader, Subset
@@ -61,6 +62,6 @@ class LatentSpacesDataModule(pl.LightningDataModule):
         val_subjs = all_subjs[:idx]
         train_idx = self.dataset.ds_hrtf.labels['subj'].isin(train_subjs)
         val_idx = self.dataset.ds_hrtf.labels['subj'].isin(val_subjs)
-        train_idx = train_idx[train_idx].index.values
-        val_idx = val_idx[val_idx].index.values
+        train_idx = np.flatnonzero(train_idx)
+        val_idx = np.flatnonzero(val_idx)
         return train_idx, val_idx

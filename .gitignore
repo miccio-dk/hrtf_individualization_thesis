@@ -141,8 +141,10 @@ cython_debug/
 logs/
 logs_old/
 old_logs/
+vae_logs/
 lightning_logs/
 result_logs/
+notebooks/
 .vscode/
 TODO.md
 script_cmds.md

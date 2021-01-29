@@ -17,7 +17,7 @@ def cli_main():
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--max_epochs', default=10, type=int)
     parser.add_argument('--num_workers', default=0, type=int)
-    parser.add_argument('--patience', default=100, type=int)
+    parser.add_argument('--patience', default=30, type=int)
     parser.add_argument('--dev', action='store_true')
     parser.add_argument('--test_ckpt_path', default=None, type=str)
     parser.add_argument('--gpus', default=1)
